@@ -1,0 +1,16 @@
+IMPORT finance
+FX GTQ := 7.80
+PROJECT "P3 - Input + IF" {
+  DISPLAY "Ingrese tasa (0.xx):"
+  READ R
+  DISPLAY "Ingrese CAPEX en GTQ:"
+  READ CAPEX_GTQ
+  CAPEX := CAPEX_GTQ to USD
+  IF R < 0.20 THEN
+    DISPLAY "Tasa aceptable"
+  ELSE
+    DISPLAY "Tasa alta"
+  END
+  DISPLAY "CAPEX en USD:"
+  DISPLAY CAPEX
+}

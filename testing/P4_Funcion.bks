@@ -1,0 +1,8 @@
+FUNCTION margen(ingresos, costos) = (ingresos - costos) / ingresos
+PROJECT "P4 - Función" {
+  INGRESOS := 15000 USD
+  COSTOS := 9000 USD
+  M := margen(INGRESOS, COSTOS)
+  DISPLAY "Margen:"
+  DISPLAY M
+}

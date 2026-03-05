@@ -1,0 +1,14 @@
+PROJECT "P5 - While (Runway)" {
+  DISPLAY "CASH inicial USD:"
+Página 10
+  READ CASH
+  DISPLAY "BURN mensual USD:"
+  READ BURN
+  MESES := 0 month
+  WHILE CASH > 0 USD DO
+    CASH := CASH - BURN
+    MESES := MESES + 1 month
+  END
+  DISPLAY "Runway (meses):"
+  DISPLAY MESES to month
+}

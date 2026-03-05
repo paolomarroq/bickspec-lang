@@ -1,0 +1,7 @@
+PROJECT "P2 - Operación aritmética" {
+  A := 10
+  B := 3
+  RESULTADO := (A + B) * 2 / 5
+  DISPLAY "Resultado:"
+  DISPLAY RESULTADO
+}
