@@ -52,7 +52,9 @@ public final class TranspileRunner {
         try {
             Files.createDirectories(GENERATED_DIRECTORY);
             String className = generatedClassName(sourceFile);
-            BickSpecJavaTranslatorVisitor translator = new BickSpecJavaTranslatorVisitor(className);
+            BickSpecJavaTranslatorVisitor translator = new BickSpecJavaTranslatorVisitor(
+                    className,
+                    BickSpecParseSupport.formatPathForDisplay(sourceFile));
             String javaSource = translator.translate((BickSpecParser.ProgramContext) result.tree());
             Path generatedFile = GENERATED_DIRECTORY.resolve(className + ".java");
             Files.writeString(generatedFile, javaSource, StandardCharsets.UTF_8);

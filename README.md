@@ -49,7 +49,7 @@ This commit adds:
 - Generated Java output under `testing/generated/`.
 - PowerShell test script alignment with the Phase II parser entry point.
 
-The generated Java is a classroom/demo translation. It reflects the source program structure and includes TODO comments for BickSpec-specific runtime behavior such as currency and time conversion helpers.
+The generated Java is a classroom/demo translation. It reflects the source program structure and includes TODO comments for BickSpec-specific runtime behavior such as currency conversion, time conversion, partial import mapping, and financial built-ins.
 
 ## Build in IntelliJ (no `mvn` required)
 
@@ -63,7 +63,7 @@ Example jar produced:
 
 The jar keeps `LexerRunner` as its default main class for Phase I compatibility. Phase II tools are invoked by class name with `java -cp`.
 
-Use UTF-8 for source files and generated Java files. `TranspileRunner` writes generated `.java` files using UTF-8.
+Use UTF-8 for `.bks` source files, generated `.java` files, and IDE/project encoding settings. The runners read `.bks` files as UTF-8, and `TranspileRunner` writes generated `.java` files as UTF-8. On Windows consoles, run `chcp 65001` when you need UTF-8 console output.
 
 ## Run lexer on one test file
 
@@ -116,6 +116,18 @@ java -cp app/target/bickspec-lexer-runner-1.0.0.jar com.bickspec.app.TranspileRu
 ```
 
 Valid files generate Java under `testing/generated/`. Invalid files still report lexical or syntax failures and do not generate Java.
+
+Generated Java files always include:
+
+- `import java.util.Scanner;`
+- `private static final Scanner INPUT = new Scanner(System.in);`
+- `readNumber(String prompt)`
+- `convert(double value, String unit)`
+- `formatCurrency(double value, String currency)`
+
+Input prompts are centralized through `readNumber`, so a BickSpec prompt followed by `READ CASH` becomes Java like `double CASH = readNumber("CASH inicial USD");`.
+
+Dimensional metadata is preserved as quoted text comments or conversion arguments, for example `double CAPEX = 500000; // "GTQ"` and `convert(MESES, "month")`. Generated TODO comments mark runtime behavior that remains pending.
 
 ## Run all tests with script (Windows PowerShell)
 

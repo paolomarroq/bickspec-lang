@@ -2,6 +2,7 @@ package com.bickspec.app;
 
 import com.bickspec.grammar.BickSpecLexer;
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Comparator;
@@ -61,7 +62,7 @@ public final class LexerRunner {
 
     private static void runLexerForFile(Path sourceFile) {
         try {
-            BickSpecLexer lexer = new BickSpecLexer(CharStreams.fromPath(sourceFile));
+            BickSpecLexer lexer = new BickSpecLexer(CharStreams.fromPath(sourceFile, StandardCharsets.UTF_8));
             Token token;
             while ((token = lexer.nextToken()).getType() != Token.EOF) {
                 String tokenName = lexer.getVocabulary().getSymbolicName(token.getType());

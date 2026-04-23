@@ -3,6 +3,7 @@ package com.bickspec.app;
 import com.bickspec.grammar.BickSpecLexer;
 import com.bickspec.grammar.BickSpecParser;
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
@@ -53,7 +54,7 @@ public final class BickSpecParseSupport {
             SyntaxErrorCollector lexicalErrors = new SyntaxErrorCollector();
             SyntaxErrorCollector syntaxErrors = new SyntaxErrorCollector();
 
-            BickSpecLexer lexer = new BickSpecLexer(CharStreams.fromPath(sourceFile));
+            BickSpecLexer lexer = new BickSpecLexer(CharStreams.fromPath(sourceFile, StandardCharsets.UTF_8));
             lexer.removeErrorListeners();
             lexer.addErrorListener(lexicalErrors);
 
