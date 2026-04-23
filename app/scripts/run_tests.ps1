@@ -25,6 +25,8 @@ if ($SaveOutput) {
     New-Item -ItemType Directory -Path $outputDirectory -Force | Out-Null
 
     & java -cp $jarFullPath com.bickspec.app.ParseRunner $inputFullPath | Tee-Object -FilePath $outputFullPath
+    exit $LASTEXITCODE
 }
 
 & java -cp $jarFullPath com.bickspec.app.ParseRunner $inputFullPath
+exit $LASTEXITCODE

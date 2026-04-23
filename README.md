@@ -38,7 +38,18 @@ Each trace entry shows:
 - The relevant source fragment or identifier.
 - The semantic or translation action that would be performed in Phase III.
 
-This is still not full Java code generation. No output files are emitted in this commit.
+## Phase II Commit 3/3 scope
+
+Phase II Commit 3/3 completes the Phase II delivery with syntax-directed translation to Java.
+
+This commit adds:
+
+- `com.bickspec.app.TranspileRunner` for Java generation from valid `.bks` files.
+- `BickSpecJavaTranslatorVisitor`, an ANTLR visitor that emits readable Java source.
+- Generated Java output under `testing/generated/`.
+- PowerShell test script alignment with the Phase II parser entry point.
+
+The generated Java is a classroom/demo translation. It reflects the source program structure and includes TODO comments for BickSpec-specific runtime behavior such as currency and time conversion helpers.
 
 ## Build in IntelliJ (no `mvn` required)
 
@@ -50,7 +61,9 @@ Example jar produced:
 
 `app/target/bickspec-lexer-runner-1.0.0.jar`
 
-The jar keeps `LexerRunner` as its default main class for Phase I compatibility. The parser runner is invoked by class name.
+The jar keeps `LexerRunner` as its default main class for Phase I compatibility. Phase II tools are invoked by class name with `java -cp`.
+
+Use UTF-8 for source files and generated Java files. `TranspileRunner` writes generated `.java` files using UTF-8.
 
 ## Run lexer on one test file
 
@@ -84,6 +97,26 @@ java -cp app/target/bickspec-lexer-runner-1.0.0.jar com.bickspec.app.ParseRunner
 
 When a directory is provided, the parser runner processes all `*.bks` files in ascending filename order. `P1` through `P6` are expected to parse successfully, `P7_FalloLexico.bks` is expected to fail lexically, and `P8_FalloSintaxis.bks` is expected to fail syntactically.
 
+## Generate Java from one test file
+
+```bash
+java -cp app/target/bickspec-lexer-runner-1.0.0.jar com.bickspec.app.TranspileRunner testing/P1_HolaMundo.bks
+```
+
+For valid files, `TranspileRunner` prints the parse result, parse tree, semantic visit trace, and generated Java path.
+
+Example generated file:
+
+`testing/generated/P1_HolaMundo_Generated.java`
+
+## Generate Java from all tests
+
+```bash
+java -cp app/target/bickspec-lexer-runner-1.0.0.jar com.bickspec.app.TranspileRunner testing
+```
+
+Valid files generate Java under `testing/generated/`. Invalid files still report lexical or syntax failures and do not generate Java.
+
 ## Run all tests with script (Windows PowerShell)
 
 Run and print to console:
@@ -100,4 +133,4 @@ Run and also save output:
 
 Default output file:
 
-`testing/outputs/phase1_tokens.txt`
+`testing/outputs/phase2_parse_results.txt`
