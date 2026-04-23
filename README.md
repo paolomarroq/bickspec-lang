@@ -89,7 +89,7 @@ java -cp app/target/bickspec-lexer-runner-1.0.0.jar com.bickspec.app.ParseRunner
 
 Expected output includes a file header, `PARSE OK`, the ANTLR parse tree, and a `Semantic visit trace:` section.
 
-For valid files, `ParseRunner` also writes a graphical parse tree under `testing/trees/`.
+For valid files, `ParseRunner` also writes graphical parse tree files under `testing/trees/`.
 
 ## Run parser validation on all tests
 
@@ -101,16 +101,18 @@ When a directory is provided, the parser runner processes all `*.bks` files in a
 
 ## Graphical parse trees
 
-`ParseRunner` and `TranspileRunner` generate one parse tree graph per valid `.bks` file.
+`ParseRunner` and `TranspileRunner` generate parse tree graph artifacts for every valid `.bks` file.
 
 Outputs are saved under `testing/trees/`:
 
-- `P1_HolaMundo_ParseTree.dot`
-- `P1_HolaMundo_ParseTree.svg` when Graphviz is available
+- `testing/trees/P1_HolaMundo_ParseTree.dot`
+- `testing/trees/P1_HolaMundo_ParseTree.svg`
 
-DOT files are always generated. SVG generation is attempted with the `dot` command from Graphviz. If Graphviz is not installed or not on `PATH`, the runner still writes the `.dot` file and prints a skip message.
+The `.dot` file is the source representation. After writing it, the runners invoke Graphviz with `dot -Tsvg <input.dot> -o <output.svg>` to render the `.svg` visualization automatically.
 
-Graphviz is recommended for classroom demos because it turns DOT files into visual diagrams. Install it from `https://graphviz.org/download/`, then make sure `dot` is available in your terminal:
+Graphviz must be installed and available in `PATH` for SVG rendering. If the `dot` command fails, the runner keeps the `.dot` file, does not fail the parse, and prints a warning.
+
+Install Graphviz from `https://graphviz.org/download/`, then make sure `dot` is available in your terminal:
 
 ```bash
 dot -V

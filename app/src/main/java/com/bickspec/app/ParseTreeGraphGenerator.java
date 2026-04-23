@@ -27,16 +27,12 @@ public final class ParseTreeGraphGenerator {
             String dot = toDot(parseResult.tree(), parseResult.parser());
             Files.writeString(dotFile, dot, StandardCharsets.UTF_8);
 
-            String svgMessage = null;
             Path generatedSvg = null;
-            if (isGraphvizAvailable()) {
-                if (renderSvg(dotFile, svgFile)) {
-                    generatedSvg = svgFile;
-                } else {
-                    svgMessage = "SVG generation skipped: Graphviz dot command failed.";
-                }
+            String svgMessage = null;
+            if (renderSvgFromDot(dotFile, svgFile)) {
+                generatedSvg = svgFile;
             } else {
-                svgMessage = "SVG generation skipped: Graphviz dot command not found in PATH.";
+                svgMessage = "Warning: Graphviz SVG generation failed, DOT file still created.";
             }
 
             return new GraphResult(dotFile, generatedSvg, svgMessage);
@@ -63,21 +59,7 @@ public final class ParseTreeGraphGenerator {
         return sanitized + "_ParseTree";
     }
 
-    private static boolean isGraphvizAvailable() {
-        try {
-            Process process = new ProcessBuilder("dot", "-V")
-                    .redirectErrorStream(true)
-                    .start();
-            return process.waitFor() == 0;
-        } catch (IOException exception) {
-            return false;
-        } catch (InterruptedException exception) {
-            Thread.currentThread().interrupt();
-            return false;
-        }
-    }
-
-    private static boolean renderSvg(Path dotFile, Path svgFile) {
+    private static boolean renderSvgFromDot(Path dotFile, Path svgFile) {
         try {
             Process process = new ProcessBuilder(
                     "dot",
