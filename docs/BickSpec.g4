@@ -9,19 +9,29 @@ importStmt
   : IMPORT ID
   ;
 fxStmt
-  : FX currency ASSIGN NUMBER
+  : FX currency ASSIGN numberLiteral
   ;
 projectBlock
   : PROJECT STRING_LITERAL LBRACE stmt* RBRACE
   ;
 stmt
-  : assignStmt
+  : batchAssignStmt
+  | assignStmt
   | displayStmt
   | readStmt
   | ifStmt
   | whileStmt
   | repeatStmt
   | exprStmt
+  ;
+batchAssignStmt
+  : idList ASSIGN exprList (currency | timeUnit)?
+  ;
+idList
+  : ID (COMMA ID)+
+  ;
+exprList
+  : expr (COMMA expr)+
   ;
 assignStmt
   : ID ASSIGN expr
@@ -54,7 +64,7 @@ compOp
 /* user functions: one-line expression */
 functionDecl
 
-  : FUNCTION ID LPAREN paramList? RPAREN ASSIGN expr
+  : FUNCTION ID LPAREN paramList? RPAREN EQUAL expr
   ;
 paramList
   : ID (COMMA ID)*
@@ -90,7 +100,7 @@ unaryExpr
 primary
   : moneyLiteral
   | timeLiteral
-  | NUMBER
+  | numberLiteral
   | STRING_LITERAL
   | ID functionCallSuffix?
   | LPAREN expr RPAREN
@@ -99,10 +109,15 @@ functionCallSuffix
   : LPAREN argList? RPAREN
   ;
 moneyLiteral
-  : NUMBER currency
+  : numberLiteral currency
   ;
 timeLiteral
   : INT timeUnit
+  ;
+numberLiteral
+  : FLOAT
+  | INT
+  | NUMBER
   ;
 currency
   : USD | GTQ | EUR
@@ -145,6 +160,7 @@ WEEK    : 'week';
 DAY     : 'day';
 /* Operators */
 ASSIGN : ':=';
+EQUAL : '=';
 PLUS  : '+';
 MINUS : '-';
 STAR  : '*';

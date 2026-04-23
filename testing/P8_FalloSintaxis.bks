@@ -1,0 +1,5 @@
+PROJECT "P8 - Fallo Sintaxis" {
+  IF NPV > 0 USD
+    DISPLAY "ACEPTAR"
+  END
+}

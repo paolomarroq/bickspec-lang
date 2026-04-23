@@ -1,6 +1,5 @@
 PROJECT "P5 - While (Runway)" {
   DISPLAY "CASH inicial USD:"
-Página 10
   READ CASH
   DISPLAY "BURN mensual USD:"
   READ BURN
