@@ -9,7 +9,7 @@ The expected result for each `.bks` input is a token stream where each line has:
 You can generate current outputs with:
 
 ```powershell
-.\app\scripts\run_tests.ps1 -SaveOutput
+.appscriptsrun_tests.ps1 -SaveOutput
 ```
 
 By default this writes:
