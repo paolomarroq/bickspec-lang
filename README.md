@@ -24,7 +24,21 @@ This commit adds:
   - `testing/P7_FalloLexico.bks`
   - `testing/P8_FalloSintaxis.bks`
 
-Semantic visitor logic and Java translation are intentionally not included yet.
+Java translation is intentionally not included yet.
+
+## Phase II Commit 2/3 scope
+
+Phase II Commit 2/3 adds the initial semantic analysis stage with the ANTLR visitor pattern.
+
+After a file parses successfully, `com.bickspec.app.ParseRunner` now traverses the parse tree with `BickSpecSemanticVisitor` and prints a deterministic semantic visit trace. The trace logs important grammar constructs such as project blocks, imports, exchange rates, assignments, display/read statements, control flow, function declarations, function calls, money literals, and time literals.
+
+Each trace entry shows:
+
+- The parse tree rule or semantic construct being visited.
+- The relevant source fragment or identifier.
+- The semantic or translation action that would be performed in Phase III.
+
+This is still not full Java code generation. No output files are emitted in this commit.
 
 ## Build in IntelliJ (no `mvn` required)
 
@@ -60,7 +74,7 @@ When a directory is provided, the runner processes all `*.bks` files in filename
 java -cp app/target/bickspec-lexer-runner-1.0.0.jar com.bickspec.app.ParseRunner testing/P1_HolaMundo.bks
 ```
 
-Expected output includes a file header, `PARSE OK`, and the ANTLR parse tree.
+Expected output includes a file header, `PARSE OK`, the ANTLR parse tree, and a `Semantic visit trace:` section.
 
 ## Run parser validation on all tests
 

@@ -38,6 +38,8 @@ public final class ParseRunner {
                 System.out.println("PARSE OK");
                 System.out.println("Parse tree:");
                 System.out.println(result.parseTree());
+                System.out.println("Semantic visit trace:");
+                result.semanticTrace().forEach(System.out::println);
             } else {
                 hasFailure = true;
                 System.out.println("PARSE FAILED");
@@ -99,7 +101,9 @@ public final class ParseRunner {
             if (syntaxErrors.hasErrors()) {
                 return ParseResult.failure("syntax", syntaxErrors.firstMessage());
             }
-            return ParseResult.success(tree.toStringTree(parser));
+            BickSpecSemanticVisitor semanticVisitor = new BickSpecSemanticVisitor();
+            semanticVisitor.visit(tree);
+            return ParseResult.success(tree.toStringTree(parser), semanticVisitor.getTrace());
         } catch (IOException exception) {
             return ParseResult.failure("io", "Failed to read input file: " + exception.getMessage());
         }
@@ -115,13 +119,18 @@ public final class ParseRunner {
         return displayPath.toString().replace('\\', '/');
     }
 
-    private record ParseResult(boolean success, String parseTree, String errorType, String message) {
-        static ParseResult success(String parseTree) {
-            return new ParseResult(true, parseTree, null, null);
+    private record ParseResult(
+            boolean success,
+            String parseTree,
+            List<String> semanticTrace,
+            String errorType,
+            String message) {
+        static ParseResult success(String parseTree, List<String> semanticTrace) {
+            return new ParseResult(true, parseTree, semanticTrace, null, null);
         }
 
         static ParseResult failure(String errorType, String message) {
-            return new ParseResult(false, null, errorType, message);
+            return new ParseResult(false, null, List.of(), errorType, message);
         }
     }
 
