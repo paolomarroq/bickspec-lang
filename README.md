@@ -89,6 +89,8 @@ java -cp app/target/bickspec-lexer-runner-1.0.0.jar com.bickspec.app.ParseRunner
 
 Expected output includes a file header, `PARSE OK`, the ANTLR parse tree, and a `Semantic visit trace:` section.
 
+For valid files, `ParseRunner` also writes a graphical parse tree under `testing/trees/`.
+
 ## Run parser validation on all tests
 
 ```bash
@@ -97,13 +99,30 @@ java -cp app/target/bickspec-lexer-runner-1.0.0.jar com.bickspec.app.ParseRunner
 
 When a directory is provided, the parser runner processes all `*.bks` files in ascending filename order. `P1` through `P6` are expected to parse successfully, `P7_FalloLexico.bks` is expected to fail lexically, and `P8_FalloSintaxis.bks` is expected to fail syntactically.
 
+## Graphical parse trees
+
+`ParseRunner` and `TranspileRunner` generate one parse tree graph per valid `.bks` file.
+
+Outputs are saved under `testing/trees/`:
+
+- `P1_HolaMundo_ParseTree.dot`
+- `P1_HolaMundo_ParseTree.svg` when Graphviz is available
+
+DOT files are always generated. SVG generation is attempted with the `dot` command from Graphviz. If Graphviz is not installed or not on `PATH`, the runner still writes the `.dot` file and prints a skip message.
+
+Graphviz is recommended for classroom demos because it turns DOT files into visual diagrams. Install it from `https://graphviz.org/download/`, then make sure `dot` is available in your terminal:
+
+```bash
+dot -V
+```
+
 ## Generate Java from one test file
 
 ```bash
 java -cp app/target/bickspec-lexer-runner-1.0.0.jar com.bickspec.app.TranspileRunner testing/P1_HolaMundo.bks
 ```
 
-For valid files, `TranspileRunner` prints the parse result, parse tree, semantic visit trace, and generated Java path.
+For valid files, `TranspileRunner` prints the parse result, parse tree, semantic visit trace, parse tree graph paths, and generated Java path.
 
 Example generated file:
 

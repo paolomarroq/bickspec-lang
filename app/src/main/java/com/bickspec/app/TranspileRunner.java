@@ -32,6 +32,9 @@ public final class TranspileRunner {
                 System.out.println(result.parseTree());
                 System.out.println("Semantic visit trace:");
                 result.semanticTrace().forEach(System.out::println);
+                ParseTreeGraphGenerator.GraphResult graphResult = ParseTreeGraphGenerator.generate(file, result);
+                System.out.println("Parse tree graph:");
+                graphResult.displayLines().forEach(System.out::println);
                 Path generatedFile = transpile(file, result);
                 System.out.println("Generated Java file:");
                 System.out.println(BickSpecParseSupport.formatPathForDisplay(generatedFile));

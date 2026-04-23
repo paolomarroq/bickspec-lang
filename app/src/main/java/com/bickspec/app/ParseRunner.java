@@ -26,6 +26,9 @@ public final class ParseRunner {
                 System.out.println(result.parseTree());
                 System.out.println("Semantic visit trace:");
                 result.semanticTrace().forEach(System.out::println);
+                ParseTreeGraphGenerator.GraphResult graphResult = ParseTreeGraphGenerator.generate(file, result);
+                System.out.println("Parse tree graph:");
+                graphResult.displayLines().forEach(System.out::println);
             } else {
                 hasFailure = true;
                 System.out.println("PARSE FAILED");

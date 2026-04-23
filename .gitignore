@@ -1,3 +1,6 @@
 app/target/
 testing/outputs/*.txt
 testing/generated/*_Generated.java
+testing/trees/*_ParseTree.dot
+testing/trees/*_ParseTree.svg
+testing/trees/*_ParseTree.png
