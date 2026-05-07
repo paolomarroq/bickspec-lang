@@ -1,3 +1,3 @@
-Generated Java files are written here by the executable BickSpec compiler jar.
+This directory is kept only as part of the historical academic test workspace.
 
-Files matching `*_Generated.java` are compiler output artifacts and are ignored by Git.
+Current compiler output is written to `output/java/`.

@@ -2,7 +2,7 @@ param(
     [string]$JarPath = "app/target/bickspec-compiler-1.0.0.jar",
     [string]$InputPath = "testing",
     [switch]$SaveOutput,
-    [string]$OutputPath = "testing/outputs/phase3_generation_results.txt"
+    [string]$OutputPath = "output/reports/generation_results.txt"
 )
 
 $repoRoot = Resolve-Path (Join-Path $PSScriptRoot "..\..")

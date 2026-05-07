@@ -9,7 +9,7 @@ The repository currently delivers the mandatory compiler/transpiler core:
 - Run lexical, syntax, and semantic validation.
 - Export a semantic symbol table CSV for valid programs.
 - Export parse tree DOT/SVG artifacts for valid programs.
-- Automatically generate coherent Java source under `testing/generated/`.
+- Automatically generate coherent Java source under `output/java/`.
 - Block Java generation when lexical, syntax, or semantic errors are found.
 
 This state intentionally stops at automatic `.java` generation. Generated Java files are ready to compile and test manually, but this commit does not add automatic `javac` or `java` execution. An installer and optional IDE/editor/plugin work are outside the mandatory core scope.
@@ -21,9 +21,9 @@ The compiler pipeline is:
 1. ANTLR lexer from `docs/BickSpec.g4`
 2. ANTLR parser validation
 3. Semantic visitor and symbol table
-4. Symbol CSV export to `testing/symbols/`
-5. Parse tree DOT/SVG export to `testing/trees/`
-6. Java generation to `testing/generated/`
+4. Symbol CSV export to `output/symbols/`
+5. Parse tree DOT/SVG export to `output/trees/`
+6. Java generation to `output/java/`
 
 Main Java components:
 
@@ -78,7 +78,7 @@ This commit adds:
 
 - `com.bickspec.app.TranspileRunner` for Java generation from valid `.bks` files.
 - `BickSpecJavaTranslatorVisitor`, an ANTLR visitor that emits readable Java source.
-- Generated Java output under `testing/generated/`.
+- Generated Java output under `output/java/`.
 - PowerShell test script alignment with the Phase II parser entry point.
 
 The generated Java is a classroom/demo translation. It reflects the source program structure and includes TODO comments for BickSpec-specific runtime behavior such as currency conversion, time conversion, partial import mapping, and financial built-ins.
@@ -135,9 +135,9 @@ Expected successful file output:
 ==== testing/P6_Imports_NPV.bks ====
 [STATUS] PARSE OK
 [STATUS] SEMANTIC OK
-[SYMBOLS] testing/symbols/P6_Imports_NPV_symbols.csv
-[TREE] testing/trees/P6_Imports_NPV_ParseTree.svg
-[JAVA] testing/generated/P6_Imports_NPV_Generated.java
+[SYMBOLS] output/symbols/P6_Imports_NPV_symbols.csv
+[TREE] output/trees/P6_Imports_NPV_ParseTree.svg
+[JAVA] output/java/P6_Imports_NPV_Generated.java
 [ACTION] Java generation completed successfully
 ```
 
@@ -154,7 +154,19 @@ Expected failing file output:
 
 Directory runs also write a summary report:
 
-`testing/outputs/phase3_generation_summary.csv`
+`output/reports/generation_summary.csv`
+
+Default generated-artifact structure:
+
+```text
+output/
+  java/       generated .java files
+  trees/      parse tree .dot and .svg files
+  symbols/    symbol table .csv files
+  reports/    compiler summary reports and saved console logs
+```
+
+`testing/` is kept as the internal academic test suite. It is no longer the default output location for compiler artifacts. For external use, pass a `.bks` file explicitly or place source files under `input/`.
 
 ## Run lexer on one test file
 
@@ -180,7 +192,7 @@ java -cp app/target/bickspec-compiler-1.0.0.jar com.bickspec.app.ParseRunner tes
 
 Expected output includes a file header, `[STATUS] PARSE OK`, `[STATUS] SEMANTIC OK`, a symbol CSV path, and a parse tree graph path.
 
-For valid files, `ParseRunner` also writes graphical parse tree files under `testing/trees/`.
+For valid files, `ParseRunner` also writes graphical parse tree files under `output/trees/`.
 
 ## Run parser validation on all tests
 
@@ -194,10 +206,10 @@ When a directory is provided, the parser runner processes all `*.bks` files in a
 
 `ParseRunner` and `TranspileRunner` generate parse tree graph artifacts for every valid `.bks` file.
 
-Outputs are saved under `testing/trees/`:
+Outputs are saved under `output/trees/`:
 
-- `testing/trees/P1_HolaMundo_ParseTree.dot`
-- `testing/trees/P1_HolaMundo_ParseTree.svg`
+- `output/trees/P1_HolaMundo_ParseTree.dot`
+- `output/trees/P1_HolaMundo_ParseTree.svg`
 
 The `.dot` file is the source representation. After writing it, the runners invoke Graphviz with `dot -Tsvg <input.dot> -o <output.svg>` to render the `.svg` visualization automatically.
 
@@ -219,7 +231,7 @@ For valid files, `TranspileRunner` prints parse status, semantic status, symbol 
 
 Example generated file:
 
-`testing/generated/P1_HolaMundo_Generated.java`
+`output/java/P1_HolaMundo_Generated.java`
 
 ## Generate Java from all tests
 
@@ -227,7 +239,7 @@ Example generated file:
 java -cp app/target/bickspec-compiler-1.0.0.jar com.bickspec.app.LexerRunner testing
 ```
 
-Valid files generate Java under `testing/generated/`. Invalid files report lexical, syntax, or semantic failures and do not generate Java.
+Valid files generate Java under `output/java/`. Invalid files report lexical, syntax, or semantic failures and do not generate Java.
 
 Generated Java files always include:
 
@@ -254,7 +266,7 @@ Phase III adds the real semantic-analysis foundation required before Java genera
 - A symbol table for identifiers, declared type, scope, declaration line, initialization state, and notes.
 - Semantic checks for undeclared variables, duplicate declarations in the same scope, simple type mismatches, and undeclared function calls.
 - Standard compiler diagnostic codes for lexical, syntax, semantic, and generation errors.
-- Symbol-table CSV export under `testing/symbols/`.
+- Symbol-table CSV export under `output/symbols/`.
 - A semantic gate that blocks both symbol CSV export and Java generation when validation fails.
 
 Console errors now use this format:
@@ -283,7 +295,7 @@ CAPEX,number,global,8,true,unit USD
 
 Example path:
 
-`testing/symbols/P3_Input_If_symbols.csv`
+`output/symbols/P3_Input_If_symbols.csv`
 
 Semantic failures do not generate CSV or Java:
 
@@ -349,9 +361,9 @@ Example successful generation output:
 ==== testing/P6_Imports_NPV.bks ====
 [STATUS] PARSE OK
 [STATUS] SEMANTIC OK
-[SYMBOLS] testing/symbols/P6_Imports_NPV_symbols.csv
-[TREE] testing/trees/P6_Imports_NPV_ParseTree.svg
-[JAVA] testing/generated/P6_Imports_NPV_Generated.java
+[SYMBOLS] output/symbols/P6_Imports_NPV_symbols.csv
+[TREE] output/trees/P6_Imports_NPV_ParseTree.svg
+[JAVA] output/java/P6_Imports_NPV_Generated.java
 [ACTION] Java generation completed successfully
 ```
 
@@ -379,8 +391,8 @@ Run and also save output:
 
 Default console-output file:
 
-`testing/outputs/phase3_generation_results.txt`
+`output/reports/generation_results.txt`
 
 The compiler also writes:
 
-`testing/outputs/phase3_generation_summary.csv`
+`output/reports/generation_summary.csv`

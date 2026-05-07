@@ -1,6 +1,6 @@
 param(
     [string]$JarPath = "app/target/bickspec-compiler-1.0.0.jar",
-    [string]$InputPath = "testing"
+    [string]$InputPath = "input"
 )
 
 $repoRoot = Resolve-Path (Join-Path $PSScriptRoot "..\..")

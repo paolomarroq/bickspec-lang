@@ -6,7 +6,7 @@ The final compiler entry point is the packaged jar:
 
 `java -jar app/target/bickspec-compiler-1.0.0.jar <path-to-file-or-directory>`
 
-The repository stops at automatic Java source generation. Generated files under `testing/generated/` can be compiled and tested manually after the compiler run.
+The repository stops at automatic Java source generation. Generated files under `output/java/` can be compiled and tested manually after the compiler run.
 
 ## Compiler gates
 
@@ -23,7 +23,7 @@ Java generation is allowed only when lexical, syntax, and semantic validation al
 
 ## Java generation and runtime model
 
-`TranspileRunner` writes generated Java files under `testing/generated/` only after all gates pass. Each generated file has a `main` method for the project block, helper methods, and a header documenting the BickSpec runtime model.
+`TranspileRunner` writes generated Java files under `output/java/` only after all gates pass. Each generated file has a `main` method for the project block, helper methods, and a header documenting the BickSpec runtime model.
 
 Money is stored internally as USD:
 
@@ -69,9 +69,9 @@ The semantic visitor records symbols with these CSV columns:
 
 Tracked entries include imports, exchange-rate constants, functions, function parameters, read variables, assigned variables, and batch assignment targets. Function parameters use `function:<name>` scopes; project-level symbols use `global`.
 
-CSV outputs are written under `testing/symbols/`, for example:
+CSV outputs are written under `output/symbols/`, for example:
 
-`testing/symbols/P3_Input_If_symbols.csv`
+`output/symbols/P3_Input_If_symbols.csv`
 
 ## Test numbering policy
 

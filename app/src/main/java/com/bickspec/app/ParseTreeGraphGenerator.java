@@ -12,7 +12,7 @@ import org.antlr.v4.runtime.tree.ParseTree;
 import org.antlr.v4.runtime.tree.TerminalNode;
 
 public final class ParseTreeGraphGenerator {
-    private static final Path TREE_DIRECTORY = Path.of("testing", "trees");
+    private static final Path TREE_DIRECTORY = Path.of("output", "trees");
 
     private ParseTreeGraphGenerator() {
     }

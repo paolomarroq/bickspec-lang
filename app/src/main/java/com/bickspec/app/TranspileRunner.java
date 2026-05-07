@@ -9,8 +9,8 @@ import java.util.ArrayList;
 import java.util.List;
 
 public final class TranspileRunner {
-    private static final Path GENERATED_DIRECTORY = Path.of("testing", "generated");
-    private static final Path SUMMARY_REPORT = Path.of("testing", "outputs", "phase3_generation_summary.csv");
+    private static final Path GENERATED_DIRECTORY = Path.of("output", "java");
+    private static final Path SUMMARY_REPORT = Path.of("output", "reports", "generation_summary.csv");
 
     private TranspileRunner() {
     }
@@ -85,7 +85,7 @@ public final class TranspileRunner {
                     -1,
                     -1).formatted());
             System.exit(1);
-            return Path.of("testing", "symbols");
+            return Path.of("output", "symbols");
         }
     }
 

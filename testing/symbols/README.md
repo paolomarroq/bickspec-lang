@@ -1,3 +1,3 @@
-Generated semantic symbol-table CSV files are written here by `ParseRunner` and `TranspileRunner`.
+This directory is kept only as part of the historical academic test workspace.
 
-Files matching `*_symbols.csv` are compiler artifacts and are ignored by Git.
+Current symbol-table output is written to `output/symbols/`.

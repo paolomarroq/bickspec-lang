@@ -6,7 +6,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 
 public final class SymbolTableCsvExporter {
-    private static final Path SYMBOL_DIRECTORY = Path.of("testing", "symbols");
+    private static final Path SYMBOL_DIRECTORY = Path.of("output", "symbols");
 
     private SymbolTableCsvExporter() {
     }

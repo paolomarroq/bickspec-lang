@@ -7,3 +7,11 @@ testing/symbols/*_symbols.csv
 testing/trees/*_ParseTree.dot
 testing/trees/*_ParseTree.svg
 testing/trees/*_ParseTree.png
+output/java/*_Generated.java
+output/java/*_Generated.class
+output/symbols/*_symbols.csv
+output/trees/*_ParseTree.dot
+output/trees/*_ParseTree.svg
+output/trees/*_ParseTree.png
+output/reports/*.csv
+output/reports/*.txt

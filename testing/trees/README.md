@@ -1,3 +1,3 @@
-Generated parse tree visualizations are written here by `ParseRunner` and `TranspileRunner`.
+This directory is kept only as part of the historical academic test workspace.
 
-`*_ParseTree.dot`, `*_ParseTree.svg`, and `*_ParseTree.png` are build/demo artifacts and are ignored by Git.
+Current parse tree output is written to `output/trees/`.
