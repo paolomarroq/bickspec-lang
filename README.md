@@ -1,409 +1,364 @@
-# bickspec-lang
-BickSpec is a finance-oriented structured programming language designed for economic engineering modeling, built with Java and ANTLR4 as part of a Compiler Design project.
+# BickSpec
 
-## Final compiler scope
+BickSpec is a finance-oriented domain-specific language (DSL) for economic engineering models. It is designed to express financial calculations, cash-flow logic, currency-aware values, simple time units, and decision rules in a readable syntax that is easier to review than general-purpose Java code.
 
-The repository currently delivers the mandatory compiler/transpiler core:
+The project implements an ANTLR4-based compiler/transpiler that reads `.bks` source files, validates them, generates Java, compiles the generated Java, and executes the resulting program from the command line. Its main domain is finance and economic engineering: project valuation, investment metrics, runway calculations, payback analysis, and structured financial simulations.
 
-- Accept one `.bks` source file or a directory of `.bks` files.
-- Run lexical, syntax, and semantic validation.
-- Export a semantic symbol table CSV for valid programs.
-- Export parse tree DOT/SVG artifacts for valid programs.
-- Automatically generate coherent Java source under `output/java/`.
-- Compile generated Java classes under `output/classes/`.
-- Execute generated Java for valid programs.
-- Block Java generation when lexical, syntax, or semantic errors are found.
+BickSpec is intended for:
 
-An installer and optional IDE/editor/plugin work are outside the mandatory core scope.
+- students and reviewers studying compiler construction through a complete DSL pipeline;
+- finance/economic engineering users who need readable calculation scripts;
+- developers who want a compact ANTLR-to-Java compiler example with diagnostics and generated artifacts.
 
-## Architecture
+As a product, BickSpec provides a readable financial DSL, a Java/ANTLR compiler architecture, a Java target runtime, command-line execution, generated parse-tree visualizations, symbol tables, diagnostics, and organized build outputs.
 
-The compiler pipeline is:
+## Key Language Features
 
-1. ANTLR lexer from `docs/BickSpec.g4`
-2. ANTLR parser validation
-3. Semantic visitor and symbol table
-4. Symbol CSV export to `output/symbols/`
-5. Parse tree DOT/SVG export to `output/trees/`
-6. Java generation to `output/java/`
-7. Java compilation to `output/classes/`
-8. Generated program execution
+- Assignments with `:=`
+- Numeric expressions with arithmetic and comparisons
+- Money literals with `USD`, `GTQ`, and `EUR`
+- Currency conversion syntax with `to` and `in`
+- Time literals with `year`, `month`, `quarter`, `week`, and `day`
+- Control flow with `IF`, `WHILE`, and `REPEAT`
+- User-defined expression functions with `FUNCTION`
+- Module declarations with `IMPORT`
+- Exchange-rate declarations with `FX`
+- Built-in financial functions: `NPV()` and `PAYBACK()`
+- Console input with `READ`
+- Console output with `DISPLAY` or `WRITE`
+- Batch assignments such as `CF1, CF2, CF3 := V1, V2, V3 USD`
 
-Main Java components:
+## Project Evolution by Phase
 
-- `LexerRunner`: token inspection compatibility tool.
-- `ParseRunner`: parse/semantic validation plus symbol and tree exports.
-- `TranspileRunner`: final compiler entry point for validation, Java generation, Java compilation, and execution.
-- `BickSpecSemanticVisitor`: semantic checks and symbol registration.
-- `BickSpecJavaTranslatorVisitor`: Java source generation and runtime helpers.
+### Phase I - Lexical Analysis
 
-## Phase I scope
+Objective: define the initial language surface and validate token recognition.
 
-Phase I implements **lexical analysis only**.
+Implemented:
 
-The CLI lexer runner prints one token per line using:
+- BickSpec language specification;
+- base ANTLR4 grammar;
+- functional lexer;
+- token and regular-expression definitions;
+- six initial test cases.
 
-`TOKEN_NAME<TAB>'LEXEME'`
+Executable behavior: Phase I lists tokens and lexemes for one `.bks` file or a directory of `.bks` files. It does not parse, validate syntax, build symbol tables, generate Java, or execute programs.
 
-EOF is skipped.
+Difference from Phase II: Phase II adds parser validation, syntax diagnostics, parse trees, semantic visitor traversal, and initial Java translation behavior.
 
-## Phase II Commit 1/3 scope
+### Phase II - Parser, Trace, and Initial Translation
 
-Phase II Commit 1/3 adds ANTLR parser validation while preserving the Phase I lexer runner.
+Objective: validate full syntax and demonstrate syntax-directed compiler stages after lexical analysis.
 
-This commit adds:
+Implemented:
 
-- Parser generation from `docs/BickSpec.g4`.
-- `com.bickspec.app.ParseRunner` for validating one `.bks` file or every `.bks` file in a directory.
-- Clear lexical and syntax error reporting through custom ANTLR error listeners.
-- Negative parser tests:
-  - `testing/P9_FalloLexico.bks`
-  - `testing/P10_FalloSintaxis.bks`
+- ANTLR parser generation from `docs/BickSpec.g4`;
+- syntax validation for source files and directories;
+- custom lexical and syntax diagnostics;
+- initial semantic visitor traversal;
+- DOT/SVG parse-tree generation;
+- initial Java generation path;
+- ten documented tests.
 
-Java translation is intentionally not included yet.
+Executable behavior: the Phase II-compatible runner parses files, validates syntax, runs the semantic visitor, prints a semantic visit trace, exports parse-tree artifacts, and reports diagnostics. In the current project state, the same semantic engine used by Phase III is available, so semantic failures are also reported.
 
-## Phase II Commit 2/3 scope
+Difference from Phase III: Phase II stops before the full final pipeline. It does not use the jar main flow to generate Java, compile generated Java, execute the resulting class, and write the final summary report.
 
-Phase II Commit 2/3 adds the initial semantic analysis stage with the ANTLR visitor pattern.
+### Phase III - Final Compiler Pipeline
 
-After a file parses successfully, `com.bickspec.app.ParseRunner` now traverses the parse tree with `BickSpecSemanticVisitor` and prints a deterministic semantic visit trace. The trace logs important grammar constructs such as project blocks, imports, exchange rates, assignments, display/read statements, control flow, function declarations, function calls, money literals, and time literals.
+Objective: complete the compiler as an executable product pipeline.
 
-Each trace entry shows:
+Implemented:
 
-- The parse tree rule or semantic construct being visited.
-- The relevant source fragment or identifier.
-- The semantic or translation action that would be performed in Phase III.
+- real symbol table construction;
+- semantic validation;
+- structured error codes;
+- automatic Java generation under `output/java`;
+- generated Java build under `output/classes`;
+- execution of the generated program;
+- professional output organization under `output/`;
+- final P1-P12 test suite;
+- executable compiler jar: `bickspec-compiler-1.0.0.jar`.
 
-## Phase II Commit 3/3 scope
+Executable behavior: Phase III is the final compiler pipeline: parse, semantic validation, symbol table CSV export, parse-tree artifact generation, Java generation, Java compilation, program execution, and summary reporting.
 
-Phase II Commit 3/3 completes the Phase II delivery with syntax-directed translation to Java.
+## Requirements
 
-This commit adds:
+- Java JDK 17 or newer.
+- Maven 3.x for local builds from source.
+- Graphviz is optional. If `dot` is available in `PATH`, SVG parse trees are generated automatically. If Graphviz is missing, DOT files are still generated and compilation continues.
+- Final jar artifact: `bickspec-compiler-1.0.0.jar`.
+- Default jar main class: `com.bickspec.app.TranspileRunner`.
 
-- `com.bickspec.app.TranspileRunner` for Java generation from valid `.bks` files.
-- `BickSpecJavaTranslatorVisitor`, an ANTLR visitor that emits readable Java source.
-- Generated Java output under `output/java/`.
-- PowerShell test script alignment with the Phase II parser entry point.
-
-The generated Java is a classroom/demo translation. It reflects the source program structure and includes TODO comments for BickSpec-specific runtime behavior such as currency conversion, time conversion, partial import mapping, and financial built-ins.
-
-## Build executable compiler jar
-
-From a terminal:
+Build the compiler jar from the repository root:
 
 ```bash
 mvn -f app/pom.xml package
 ```
 
-Or in IntelliJ IDEA:
-
-1. Open the project.
-2. Open **Maven Tool Window**.
-3. Under `app` -> **Lifecycle**, run `package`.
-
-Example jar produced:
-
-`app/target/bickspec-compiler-1.0.0.jar`
-
-The jar is the executable compiler entry point and runs `TranspileRunner` by default.
-
-Use UTF-8 for `.bks` source files, generated `.java` files, and IDE/project encoding settings. The runners read `.bks` files as UTF-8, and `TranspileRunner` writes generated `.java` files as UTF-8. On Windows consoles, run `chcp 65001` when you need UTF-8 console output.
-
-## Run the compiler on one file
-
-```bash
-java -jar app/target/bickspec-compiler-1.0.0.jar testing/P6_Imports_NPV.bks
-```
-
-PowerShell wrapper:
-
-```powershell
-.\app\scripts\compile.ps1 -InputPath testing\P6_Imports_NPV.bks
-```
-
-## Run the compiler on the full test suite
-
-```bash
-java -jar app/target/bickspec-compiler-1.0.0.jar testing
-```
-
-PowerShell wrapper:
-
-```powershell
-.\app\scripts\compile.ps1 -InputPath testing
-```
-
-Expected successful file output:
+The jar is created at:
 
 ```text
-==== testing/P6_Imports_NPV.bks ====
-[STATUS] PARSE OK
-[STATUS] SEMANTIC OK
-[SYMBOLS] output/symbols/P6_Imports_NPV_symbols.csv
-[TREE] output/trees/P6_Imports_NPV_ParseTree.svg
-[JAVA] output/java/P6_Imports_NPV_Generated.java
-[ACTION] Java generation completed successfully
-[BUILD] output/classes/P6_Imports_NPV_Generated.class
-[EXECUTION] completed successfully
+app/target/bickspec-compiler-1.0.0.jar
 ```
 
-Interactive BickSpec programs that use `READ` inherit the real console stdin/stdout/stderr. The compiler reports `[EXECUTION] interactive mode`, does not use companion stdin files, and does not put interactive output inside the `PROGRAM OUTPUT` box.
+## How to Run Phase I
 
-Expected failing file output:
+Phase I corresponds to lexical analysis and token/lexeme listing.
 
-```text
-==== testing/P11_FalloSemantico.bks ====
-[STATUS] PARSE OK
-[STATUS] SEMANTIC FAILED
-[ERROR] SEM01 - Variable 'X' used before declaration at line 2:11
-[SYMBOLS] not generated
-[JAVA] not generated
-```
-
-Directory runs also write a summary report:
-
-`output/reports/generation_summary.csv`
-
-Default generated-artifact structure:
-
-```text
-output/
-  java/       generated .java files
-  classes/    compiled .class files
-  trees/      parse tree .dot and .svg files
-  symbols/    symbol table .csv files
-  reports/    compiler summary reports and saved console logs
-```
-
-`testing/` is kept as the internal academic test suite. It is no longer the default output location for compiler artifacts. For external use, pass a `.bks` file explicitly or place source files under `input/`.
-
-## Run lexer on one test file
+Run Phase I on one file:
 
 ```bash
 java -cp app/target/bickspec-compiler-1.0.0.jar com.bickspec.app.LexerRunner testing/P1_HolaMundo.bks
 ```
 
-## Run lexer on all tests (directory mode)
-
-```bash
-java -jar app/target/bickspec-compiler-1.0.0.jar testing
-```
-
-When a directory is provided, the runner processes all `*.bks` files in filename order and prints file headers like:
-
-`==== testing/P1_HolaMundo.bks ====`
-
-## Run parser validation on one test file
-
-```bash
-java -cp app/target/bickspec-compiler-1.0.0.jar com.bickspec.app.ParseRunner testing/P1_HolaMundo.bks
-```
-
-Expected output includes a file header, `[STATUS] PARSE OK`, `[STATUS] SEMANTIC OK`, a symbol CSV path, and a parse tree graph path.
-
-For valid files, `ParseRunner` also writes graphical parse tree files under `output/trees/`.
-
-## Run parser validation on all tests
-
-```bash
-java -cp app/target/bickspec-compiler-1.0.0.jar com.bickspec.app.ParseRunner testing
-```
-
-When a directory is provided, the parser runner processes all `*.bks` files in ascending test-number order. `P1` through `P8` and `P12` are expected to pass parse and semantic validation, `P9_FalloLexico.bks` is expected to fail lexically, `P10_FalloSintaxis.bks` is expected to fail syntactically, and `P11_FalloSemantico.bks` is expected to fail semantically.
-
-## Graphical parse trees
-
-`ParseRunner` and `TranspileRunner` generate parse tree graph artifacts for every valid `.bks` file.
-
-Outputs are saved under `output/trees/`:
-
-- `output/trees/P1_HolaMundo_ParseTree.dot`
-- `output/trees/P1_HolaMundo_ParseTree.svg`
-
-The `.dot` file is the source representation. After writing it, the runners invoke Graphviz with `dot -Tsvg <input.dot> -o <output.svg>` to render the `.svg` visualization automatically.
-
-Graphviz must be installed and available in `PATH` for SVG rendering. If the `dot` command fails, the runner keeps the `.dot` file, does not fail the parse, and prints a warning.
-
-Install Graphviz from `https://graphviz.org/download/`, then make sure `dot` is available in your terminal:
-
-```bash
-dot -V
-```
-
-## Generate Java from one test file
-
-```bash
-java -jar app/target/bickspec-compiler-1.0.0.jar testing/P1_HolaMundo.bks
-```
-
-For valid files, `TranspileRunner` prints parse status, semantic status, symbol CSV path, parse tree graph path, generated Java path, compiled class path, execution status, and generated program output.
-
-Example generated file:
-
-`output/java/P1_HolaMundo_Generated.java`
-
-## Generate Java from all tests
+Run Phase I on a directory:
 
 ```bash
 java -cp app/target/bickspec-compiler-1.0.0.jar com.bickspec.app.LexerRunner testing
 ```
 
-Valid files generate Java under `output/java/`. Invalid files report lexical, syntax, or semantic failures and do not generate Java.
-
-Generated Java files always include:
-
-- `import java.util.Scanner;`
-- `private static final Scanner INPUT = new Scanner(System.in);`
-- `readNumber(String prompt)`
-- `convert(double value, String unit)`
-- `toUsd(double amount, String currency)`
-- `fromUsd(double amount, String currency)`
-- `formatMoney(double value, String currency)`
-- `NPV(double rate, double capex, double... cashflows)`
-- `PAYBACK(double capex, double... cashflows)`
-
-Input prompts are centralized through `readNumber`, so a BickSpec prompt followed by `READ CASH` becomes Java like `double CASH = readNumber("CASH inicial USD");`.
-
-Money is stored internally as USD. A literal such as `500000 GTQ` is emitted as `toUsd(500000, "GTQ")`, using `FX GTQ := ...` where the BickSpec source provides it. The expression form `DISPLAY value in GTQ` affects presentation only and emits `formatMoney(fromUsd(value, "GTQ"), "GTQ")`; it does not alter the stored USD value.
-
-Dimensional metadata for time is preserved as quoted text comments or helper arguments, for example `double T1 = 1; // "month"` and `convert(MESES, "month")`.
-
-## Phase III Commit 1/3 scope
-
-Phase III adds the real semantic-analysis foundation required before Java generation:
-
-- A symbol table for identifiers, declared type, scope, declaration line, initialization state, and notes.
-- Semantic checks for undeclared variables, duplicate declarations in the same scope, simple type mismatches, and undeclared function calls.
-- Standard compiler diagnostic codes for lexical, syntax, semantic, and generation errors.
-- Symbol-table CSV export under `output/symbols/`.
-- A semantic gate that blocks both symbol CSV export and Java generation when validation fails.
-
-Console errors now use this format:
+Output format:
 
 ```text
-[ERROR] SEM01 - Variable 'X' used before declaration at line 2:11
+TOKEN_NAME    'LEXEME'
 ```
 
-Implemented error-code categories:
+The lexer runner skips EOF and prints each recognized token in source order. Directory mode processes `.bks` files in deterministic filename order.
 
-- `LEX01`: lexical recognition error
-- `SYN01`: parser syntax error
-- `SEM01`: variable used before declaration or initialization
-- `SEM02`: duplicate declaration in the same scope
-- `SEM03`: simple type mismatch
-- `SEM04`: undeclared function call
-- `GEN01`, `GEN02`, `GEN03`: generation or output infrastructure errors
+## How to Run Phase II
 
-Successful semantic validation writes an IntelliJ-friendly comma-separated CSV:
+Phase II corresponds to parser validation, syntax validation, semantic visitor traversal, and parse-tree visualization.
 
-```text
-name,type,scope,declared_at,initialized,notes
-R,number,global,5,true,read input
-CAPEX,number,global,8,true,unit USD
+Run Phase II on one file:
+
+```bash
+java -cp app/target/bickspec-compiler-1.0.0.jar com.bickspec.app.ParseRunner testing/P1_HolaMundo.bks
 ```
 
-Example path:
+Run Phase II on a directory:
 
-`output/symbols/P3_Input_If_symbols.csv`
-
-Semantic failures do not generate CSV or Java:
-
-```text
-==== testing/P11_FalloSemantico.bks ====
-[STATUS] PARSE OK
-[STATUS] SEMANTIC FAILED
-[ERROR] SEM01 - Variable 'X' used before declaration at line 2:11
-[SYMBOLS] not generated
-[JAVA] not generated
+```bash
+java -cp app/target/bickspec-compiler-1.0.0.jar com.bickspec.app.ParseRunner testing
 ```
 
-### Test numbering policy
+For valid files, `ParseRunner` reports:
 
-The Phase II test names and numbering are intentionally preserved for continuity:
+- `[STATUS] PARSE OK`
+- `[STATUS] SEMANTIC OK`
+- semantic visit trace
+- symbol table CSV path
+- parse-tree DOT/SVG path
 
-`P1_HolaMundo.bks` through `P10_FalloSintaxis.bks`.
+For invalid files, it reports lexical, syntax, or semantic diagnostics and does not generate Java.
 
-Phase III adds the required cases as new tests instead of renumbering older files:
+`ParseRunner` is useful when reviewing the compiler front end independently from the final Phase III build-and-execute pipeline.
 
-- `P11_FalloSemantico.bks`: semantic-negative test.
-- `P12_Recursividad.bks`: recursion/function lookup test.
+## How to Run Phase III
 
-## Final test suite organization
+Phase III is the final compiler pipeline.
 
-- `P1_HolaMundo.bks`: basic project and display.
-- `P2_Aritmetica.bks`: variables, assignment, arithmetic.
-- `P3_Input_If.bks`: input, FX, conversion, and `IF`/`ELSE`.
-- `P4_Funcion.bks`: user function declaration and call.
-- `P5_While_Runway.bks`: `WHILE` and time metadata.
-- `P6_Imports_NPV.bks`: imports, FX, money conversion, and `NPV`.
-- `P7_BatchMoney.bks`: batch money assignment.
-- `P8_BatchTime.bks`: batch time assignment.
-- `P9_FalloLexico.bks`: lexical failure coverage.
-- `P10_FalloSintaxis.bks`: syntax failure coverage.
-- `P11_FalloSemantico.bks`: semantic failure coverage.
-- `P12_Recursividad.bks`: recursion coverage.
+Run the full pipeline on one file:
 
-## Phase III Commit 2/3 scope
-
-Phase III Commit 2/3 completes the Java generation layer while preserving the semantic gate from Commit 1/3.
-
-The generator now translates:
-
-- Variables and assignments to Java `double` locals.
-- Arithmetic and logical expressions.
-- `IF`/`ELSE`, `WHILE`, and `REPEAT ... TIMES`.
-- Function declarations and function calls, including recursive function declarations.
-- Batch assignments as explicit Java assignments with shared money/time metadata.
-- BickSpec imports as generated Java runtime module markers.
-- Official built-ins `NPV(...)` and `PAYBACK(...)` as real Java helper methods.
-
-Generated Java files include a runtime header documenting the built-in model:
-
-- USD is the internal representation of money.
-- GTQ and EUR values are converted using FX rates.
-- `expr in GTQ` and `expr in EUR` affect display only.
-- `NPV()` and `PAYBACK()` are BickSpec built-ins implemented as Java helpers.
-
-Example successful generation output:
-
-```text
-==== testing/P6_Imports_NPV.bks ====
-[STATUS] PARSE OK
-[STATUS] SEMANTIC OK
-[SYMBOLS] output/symbols/P6_Imports_NPV_symbols.csv
-[TREE] output/trees/P6_Imports_NPV_ParseTree.svg
-[JAVA] output/java/P6_Imports_NPV_Generated.java
-[ACTION] Java generation completed successfully
-[BUILD] output/classes/P6_Imports_NPV_Generated.class
-[EXECUTION] completed successfully
+```bash
+java -jar app/target/bickspec-compiler-1.0.0.jar testing/P1_HolaMundo.bks
 ```
 
-Example generated code:
+Run the full pipeline on a directory:
 
-```java
-double CAPEX = toUsd(500000, "GTQ"); // "GTQ"
-double NPV_VAL = NPV(R, CAPEX, CF1, CF2, CF3); // BickSpec built-in
-System.out.println(formatMoney(fromUsd(NPV_VAL, "GTQ"), "GTQ"));
+```bash
+java -jar app/target/bickspec-compiler-1.0.0.jar testing
 ```
 
-## Run all tests with script (Windows PowerShell)
+For each valid source file, the compiler performs:
 
-Run and print to console:
+1. lexical and syntax validation;
+2. semantic validation;
+3. symbol table CSV export;
+4. DOT/SVG parse-tree generation;
+5. Java source generation;
+6. generated Java compilation with `javac`;
+7. execution of the generated Java class.
+
+When a directory contains expected negative tests, such as `testing/P9_FalloLexico.bks`, `testing/P10_FalloSintaxis.bks`, and `testing/P11_FalloSemantico.bks`, diagnostics are printed and the process exits with a non-zero status after processing the suite.
+
+Windows PowerShell helper scripts are also available:
 
 ```powershell
+.\app\scripts\compile.ps1
 .\app\scripts\run_tests.ps1
-```
-
-Run and also save output:
-
-```powershell
 .\app\scripts\run_tests.ps1 -SaveOutput
 ```
 
-Default console-output file:
+## Executing Outside the Project
 
-`output/reports/generation_results.txt`
+You can run BickSpec outside the repository with only the final jar and a JDK. The generated `output/` directory is created relative to the terminal's current working directory.
 
-The compiler also writes:
+Run one `.bks` file:
 
-`output/reports/generation_summary.csv`
+```bash
+java -jar bickspec-compiler-1.0.0.jar path/to/program.bks
+```
+
+Run every `.bks` file in a directory:
+
+```bash
+java -jar bickspec-compiler-1.0.0.jar path/to/programs
+```
+
+Run Phase I-style lexical listing outside the project:
+
+```bash
+java -cp bickspec-compiler-1.0.0.jar com.bickspec.app.LexerRunner path/to/program.bks
+```
+
+Run Phase II-style parser validation outside the project:
+
+```bash
+java -cp bickspec-compiler-1.0.0.jar com.bickspec.app.ParseRunner path/to/program.bks
+```
+
+Requirements outside the project:
+
+- `java` must be available in `PATH`;
+- `javac` must be available in `PATH` because Phase III compiles generated Java;
+- Graphviz `dot` is optional for SVG parse trees;
+- no local repository paths are required.
+
+## Output Structure
+
+The compiler writes generated artifacts under `output/` relative to the current working directory.
+
+```text
+output/
+  java/       Generated Java source files.
+  classes/    Compiled `.class` files from generated Java.
+  trees/      Parse-tree `.dot` files and optional `.svg` files.
+  symbols/    Symbol table CSV files.
+  reports/    Directory-mode summary reports and saved script output.
+```
+
+Important files include:
+
+- `output/java/<Program>_Generated.java`
+- `output/classes/<Program>_Generated.class`
+- `output/trees/<Program>_ParseTree.dot`
+- `output/trees/<Program>_ParseTree.svg`
+- `output/symbols/<Program>_symbols.csv`
+- `output/reports/generation_summary.csv`
+
+## Test Suite
+
+The final documented suite is `testing/P1` through `testing/P12`.
+
+| Test | File | Type | Coverage |
+| --- | --- | --- | --- |
+| P1 | `P1_HolaMundo.bks` | Positive | Basic project and output |
+| P2 | `P2_Aritmetica.bks` | Positive | Arithmetic expressions |
+| P3 | `P3_Input_If.bks` | Positive, interactive | `READ`, `IF`, FX, currency conversion |
+| P4 | `P4_Funcion.bks` | Positive | User-defined function |
+| P5 | `P5_While_Runway.bks` | Positive, interactive | `WHILE`, time units, runway calculation |
+| P6 | `P6_Imports_NPV.bks` | Positive | Imports, FX, `NPV()`, finance case |
+| P7 | `P7_BatchMoney.bks` | Positive | Batch assignment with money units |
+| P8 | `P8_BatchTime.bks` | Positive | Batch assignment with time units |
+| P9 | `P9_FalloLexico.bks` | Negative | Lexical error |
+| P10 | `P10_FalloSintaxis.bks` | Negative | Syntax error |
+| P11 | `P11_FalloSemantico.bks` | Negative | Semantic error |
+| P12 | `P12_Recursividad.bks` | Positive | Recursive function declaration/translation case |
+
+Positive tests are expected to parse, pass semantic validation, generate Java, compile, and run. Negative tests are expected to report diagnostics and skip Java generation.
+
+## Error Codes
+
+BickSpec diagnostics use short code families:
+
+- `LEX`: lexical errors, such as an unrecognized character.
+- `SYN`: syntax errors, such as a missing `THEN` in an `IF` statement.
+- `SEM`: semantic errors, such as using a variable before declaration or calling an undeclared function.
+- `GEN`: generation, file, Graphviz, Java compilation, or execution errors.
+
+Representative examples:
+
+```text
+[ERROR] LEX01 - Token recognition error
+[ERROR] SYN01 - Mismatched input
+[ERROR] SEM01 - Variable 'X' used before declaration
+[ERROR] SEM02 - Duplicate declaration
+[ERROR] SEM03 - Invalid expression type for a numeric context
+[ERROR] SEM04 - Function is not declared
+[ERROR] GEN03 - Failed to write generated Java file
+[ERROR] GEN06 - Generated Java compilation failed
+```
+
+## Interactive Programs
+
+Programs that use `READ` must be run individually when real user input is required. They read directly from the terminal.
+
+Examples:
+
+```bash
+java -jar app/target/bickspec-compiler-1.0.0.jar testing/P3_Input_If.bks
+java -jar app/target/bickspec-compiler-1.0.0.jar testing/P5_While_Runway.bks
+```
+
+Non-interactive programs may show captured output inside a boxed `PROGRAM OUTPUT` section. Interactive programs inherit terminal input/output directly so prompts and user input are not broken by boxed output formatting.
+
+## Repository Structure
+
+```text
+bickspec-lang/
+  README.md
+  app/
+    pom.xml
+    scripts/
+      compile.ps1
+      run_tests.ps1
+    src/main/java/com/bickspec/app/
+      LexerRunner.java
+      ParseRunner.java
+      TranspileRunner.java
+      BickSpecParseSupport.java
+      BickSpecSemanticVisitor.java
+      BickSpecJavaTranslatorVisitor.java
+      SymbolTable.java
+      SymbolInfo.java
+      SymbolTableCsvExporter.java
+      ParseTreeGraphGenerator.java
+      CompilerDiagnostic.java
+  docs/
+    BickSpec.g4
+    BickSpec_Spec_ANTLR_FaseI.pdf
+    BickSpec_Spec_ANTLR_FaseII.pdf
+    BickSpec_Spec_ANTLR_FaseIII.pdf
+    PHASE_III_SEMANTICS.md
+  input/
+    README.md
+  testing/
+    P1_HolaMundo.bks
+    ...
+    P12_Recursividad.bks
+    expected/
+    generated/
+    symbols/
+    trees/
+  output/
+    java/
+    classes/
+    trees/
+    symbols/
+    reports/
+```
+
+## Final Product Status
+
+BickSpec is complete through Phase III as a command-line compiler/transpiler. The current product can tokenize, parse, semantically validate, generate Java, compile generated Java, execute valid programs, export symbol tables, generate parse-tree artifacts, and report structured diagnostics.
+
+Future or optional work could include:
+
+- an IDE or editor extension;
+- a plugin system for domain libraries;
+- a stronger static type system for units, currencies, and function signatures;
+- richer module linking for `IMPORT`;
+- expanded financial runtime functions;
+- more formal optimization and intermediate representation stages;
+- packaged installers or CI release artifacts.
