@@ -2,6 +2,8 @@ package com.bickspec.app;
 
 import com.bickspec.grammar.BickSpecBaseVisitor;
 import com.bickspec.grammar.BickSpecParser;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.LinkedHashSet;
 import java.util.List;
@@ -15,6 +17,7 @@ public final class BickSpecJavaTranslatorVisitor extends BickSpecBaseVisitor<Voi
     private final String sourceDisplayPath;
     private final List<String> classComments = new ArrayList<>();
     private final List<String> constants = new ArrayList<>();
+    private final Set<String> fxCurrencies = new LinkedHashSet<>();
     private final List<String> methods = new ArrayList<>();
     private final StringBuilder mainBody = new StringBuilder();
     private final Set<String> declaredVariables = new LinkedHashSet<>();
@@ -35,15 +38,25 @@ public final class BickSpecJavaTranslatorVisitor extends BickSpecBaseVisitor<Voi
 
     @Override
     public Void visitImportStmt(BickSpecParser.ImportStmtContext context) {
-        classComments.add("TODO: import mapping is partial for BickSpec module '" + context.ID().getText() + "'.");
+        String module = context.ID().getText();
+        Path resolvedModule = resolveImportModule(module);
+        if (resolvedModule != null) {
+            classComments.add("BickSpec import '" + module + "' resolved at "
+                    + BickSpecParseSupport.formatPathForDisplay(resolvedModule)
+                    + "; linked functions should be copied into this translation unit when needed.");
+        } else {
+            classComments.add("BickSpec import '" + module
+                    + "' has no local .bks module file; built-ins are provided by generated runtime helpers.");
+        }
         return null;
     }
 
     @Override
     public Void visitFxStmt(BickSpecParser.FxStmtContext context) {
         String currency = context.currency().getText();
-        constants.add("private static final double FX_" + currency + " = " + renderNumber(context.numberLiteral()) + ";");
-        classComments.add("TODO: currency conversion runtime not yet implemented for FX " + currency + ".");
+        fxCurrencies.add(currency);
+        constants.add("private static final double FX_" + currency + " = "
+                + renderNumber(context.numberLiteral()) + "; // 1 USD = FX_" + currency + " " + currency);
         return null;
     }
 
@@ -107,11 +120,31 @@ public final class BickSpecJavaTranslatorVisitor extends BickSpecBaseVisitor<Voi
     public Void visitBatchAssignStmt(BickSpecParser.BatchAssignStmtContext context) {
         List<TerminalNode> ids = context.idList().ID();
         List<BickSpecParser.ExprContext> expressions = context.exprList().expr();
+        List<JavaExpression> renderedExpressions = new ArrayList<>();
+        String commonUnit = context.currency() != null ? context.currency().getText() : null;
+        if (commonUnit == null && context.timeUnit() != null) {
+            commonUnit = context.timeUnit().getText();
+        }
+        for (BickSpecParser.ExprContext expressionContext : expressions) {
+            JavaExpression rendered = renderExpr(expressionContext);
+            renderedExpressions.add(rendered);
+            if (commonUnit == null && rendered.unit() != null) {
+                commonUnit = rendered.unit();
+            }
+        }
         for (int index = 0; index < ids.size(); index++) {
-            JavaExpression expression = index < expressions.size()
-                    ? renderExpr(expressions.get(index))
+            JavaExpression expression = index < renderedExpressions.size()
+                    ? renderedExpressions.get(index)
                     : new JavaExpression("0.0", "TODO: missing grouped assignment expression");
             ensureExternalBatchPlaceholder(expression.code());
+            if (commonUnit != null && isCurrency(commonUnit) && expression.unit() == null) {
+                expression = new JavaExpression(
+                        moneyExpression(expression.code(), commonUnit),
+                        commonUnit);
+            }
+            if (commonUnit != null && !isCurrency(commonUnit) && expression.unit() == null) {
+                expression = new JavaExpression(expression.code(), commonUnit);
+            }
             appendAssignment(ids.get(index).getText(), expression);
         }
         return null;
@@ -119,10 +152,15 @@ public final class BickSpecJavaTranslatorVisitor extends BickSpecBaseVisitor<Voi
 
     @Override
     public Void visitDisplayStmt(BickSpecParser.DisplayStmtContext context) {
-        JavaExpression expression = renderExpr(context.expr());
+        String displayCurrency = context.currency() != null
+                ? context.currency().getText()
+                : displayCurrency(context.expr());
+        JavaExpression expression = displayCurrency == null
+                ? renderExpr(context.expr())
+                : renderLogicOr(context.expr().logicOrExpr());
         String code = expression.code();
-        if (context.currency() != null) {
-            code = "formatCurrency(" + code + ", \"" + context.currency().getText() + "\")";
+        if (displayCurrency != null) {
+            code = "formatMoney(fromUsd(" + code + ", \"" + displayCurrency + "\"), \"" + displayCurrency + "\")";
         }
         line("System.out.println(" + code + ");" + metadataComment(expression.unit()));
         return null;
@@ -206,10 +244,11 @@ public final class BickSpecJavaTranslatorVisitor extends BickSpecBaseVisitor<Voi
     }
 
     private void appendAssignment(String variableName, JavaExpression expression) {
+        String comment = expression.comment() == null ? metadataComment(expression.unit()) : " // " + expression.comment();
         if (declaredVariables.add(variableName)) {
-            line("double " + variableName + " = " + expression.code() + ";" + metadataComment(expression.unit()));
+            line("double " + variableName + " = " + expression.code() + ";" + comment);
         } else {
-            line(variableName + " = " + expression.code() + ";" + metadataComment(expression.unit()));
+            line(variableName + " = " + expression.code() + ";" + comment);
         }
     }
 
@@ -231,8 +270,14 @@ public final class BickSpecJavaTranslatorVisitor extends BickSpecBaseVisitor<Voi
         StringBuilder source = new StringBuilder();
         source.append("// Auto-generated by BickSpec TranspileRunner\n");
         source.append("// Source: ").append(sourceDisplayPath).append("\n");
-        source.append("// Phase II: syntax-directed translation to Java\n");
-        source.append("// NOTE: Some domain-specific runtime behavior is still pending implementation.\n\n");
+        source.append("// Phase III: semantic-gated translation to executable Java\n");
+        source.append("/*\n");
+        source.append(" * BickSpec runtime notes:\n");
+        source.append(" * - Money is stored internally in USD.\n");
+        source.append(" * - GTQ and EUR values are converted to USD using FX declarations.\n");
+        source.append(" * - DISPLAY expr in GTQ/EUR affects presentation only, not stored values.\n");
+        source.append(" * - NPV() and PAYBACK() are built-in language functions implemented as Java helpers.\n");
+        source.append(" */\n\n");
         source.append("import java.util.Scanner;\n\n");
         source.append("public class ").append(className).append(" {\n");
         source.append("    private static final Scanner INPUT = new Scanner(System.in);\n\n");
@@ -240,21 +285,13 @@ public final class BickSpecJavaTranslatorVisitor extends BickSpecBaseVisitor<Voi
         for (String comment : classComments) {
             source.append("    // ").append(comment).append("\n");
         }
-        if (!classComments.isEmpty()) {
-            source.append("    // TODO: dimensional/unit semantics preserved as metadata only.\n\n");
-        }
+        appendDefaultFxConstants();
 
         for (String constant : constants) {
             source.append("    ").append(constant).append("\n");
         }
         if (!constants.isEmpty()) {
             source.append("\n");
-        }
-
-        for (String functionName : calledFunctions) {
-            if (!declaredFunctions.contains(functionName)) {
-                appendBuiltinStub(source, functionName);
-            }
         }
 
         for (String method : methods) {
@@ -269,20 +306,15 @@ public final class BickSpecJavaTranslatorVisitor extends BickSpecBaseVisitor<Voi
         return source.toString();
     }
 
-    private static void appendBuiltinStub(StringBuilder source, String functionName) {
-        if ("NPV".equals(functionName)) {
-            source.append("    private static double NPV(double rate, double capex, double... cashflows) {\n");
-            source.append("        // TODO: implement real financial runtime for NPV.\n");
-            source.append("        return 0.0;\n");
-            source.append("    }\n\n");
-            return;
+    private void appendDefaultFxConstants() {
+        if (!fxCurrencies.contains("GTQ")) {
+            constants.add("private static final double FX_GTQ = 1.0; // default when source omits FX GTQ");
+            fxCurrencies.add("GTQ");
         }
-        source.append("    private static double ").append(functionName).append("(double... values) {\n");
-        source.append("        // TODO: implement real runtime for built-in/domain function '")
-                .append(functionName)
-                .append("'.\n");
-        source.append("        return 0.0;\n");
-        source.append("    }\n\n");
+        if (!fxCurrencies.contains("EUR")) {
+            constants.add("private static final double FX_EUR = 1.0; // default when source omits FX EUR");
+            fxCurrencies.add("EUR");
+        }
     }
 
     private static void appendStandardHelpers(StringBuilder source) {
@@ -295,11 +327,63 @@ public final class BickSpecJavaTranslatorVisitor extends BickSpecBaseVisitor<Voi
         source.append("        return 0.0;\n");
         source.append("    }\n\n");
         source.append("    private static double convert(double value, String unit) {\n");
-        source.append("        // TODO: implement currency/time conversion runtime helper.\n");
+        source.append("        if (isCurrency(unit)) {\n");
+        source.append("            return toUsd(value, unit);\n");
+        source.append("        }\n");
+        source.append("        // Time units are represented as numeric values with metadata comments.\n");
         source.append("        return value;\n");
         source.append("    }\n\n");
-        source.append("    private static String formatCurrency(double value, String currency) {\n");
-        source.append("        return value + \" \" + currency;\n");
+        source.append("    private static boolean isCurrency(String unit) {\n");
+        source.append("        return \"USD\".equals(unit) || \"GTQ\".equals(unit) || \"EUR\".equals(unit);\n");
+        source.append("    }\n\n");
+        source.append("    private static double toUsd(double amount, String currency) {\n");
+        source.append("        return switch (currency) {\n");
+        source.append("            case \"USD\" -> amount;\n");
+        source.append("            case \"GTQ\" -> amount / FX_GTQ;\n");
+        source.append("            case \"EUR\" -> amount / FX_EUR;\n");
+        source.append("            default -> amount;\n");
+        source.append("        };\n");
+        source.append("    }\n\n");
+        source.append("    private static double fromUsd(double amount, String currency) {\n");
+        source.append("        return switch (currency) {\n");
+        source.append("            case \"USD\" -> amount;\n");
+        source.append("            case \"GTQ\" -> amount * FX_GTQ;\n");
+        source.append("            case \"EUR\" -> amount * FX_EUR;\n");
+        source.append("            default -> amount;\n");
+        source.append("        };\n");
+        source.append("    }\n\n");
+        source.append("    private static String formatMoney(double value, String currency) {\n");
+        source.append("        return String.format(\"%.2f %s\", value, currency);\n");
+        source.append("    }\n\n");
+        source.append("    /**\n");
+        source.append("     * BickSpec built-in: NPV(rate, capex, cashflows...)\n");
+        source.append("     * Computes net present value using CAPEX as initial investment\n");
+        source.append("     * and future cash flows discounted by rate.\n");
+        source.append("     */\n");
+        source.append("    private static double NPV(double rate, double capex, double... cashflows) {\n");
+        source.append("        double value = -capex;\n");
+        source.append("        for (int index = 0; index < cashflows.length; index++) {\n");
+        source.append("            value += cashflows[index] / Math.pow(1.0 + rate, index + 1);\n");
+        source.append("        }\n");
+        source.append("        return value;\n");
+        source.append("    }\n\n");
+        source.append("    /**\n");
+        source.append("     * BickSpec built-in: PAYBACK(capex, cashflows...)\n");
+        source.append("     * Computes the recovery period based on cumulative cash flows.\n");
+        source.append("     */\n");
+        source.append("    private static double PAYBACK(double capex, double... cashflows) {\n");
+        source.append("        double recovered = 0.0;\n");
+        source.append("        for (int index = 0; index < cashflows.length; index++) {\n");
+        source.append("            double cashflow = cashflows[index];\n");
+        source.append("            if (recovered + cashflow >= capex) {\n");
+        source.append("                if (cashflow == 0.0) {\n");
+        source.append("                    return index + 1;\n");
+        source.append("                }\n");
+        source.append("                return index + ((capex - recovered) / cashflow);\n");
+        source.append("            }\n");
+        source.append("            recovered += cashflow;\n");
+        source.append("        }\n");
+        source.append("        return -1.0;\n");
         source.append("    }\n");
     }
 
@@ -319,7 +403,13 @@ public final class BickSpecJavaTranslatorVisitor extends BickSpecBaseVisitor<Voi
             String text = context.getChild(index).getText();
             if (("to".equals(text) || "in".equals(text)) && index + 1 < context.getChildCount()) {
                 String unit = context.getChild(index + 1).getText();
-                expression = new JavaExpression("convert(" + expression.code() + ", \"" + unit + "\")", unit);
+                if ("in".equals(text) && isCurrency(unit)) {
+                    expression = new JavaExpression("fromUsd(" + expression.code() + ", \"" + unit + "\")", unit);
+                } else if (isCurrency(unit)) {
+                    expression = new JavaExpression("toUsd(" + expression.code() + ", \"" + unit + "\")", "USD");
+                } else {
+                    expression = new JavaExpression("convert(" + expression.code() + ", \"" + unit + "\")", unit);
+                }
                 index++;
             }
         }
@@ -375,7 +465,8 @@ public final class BickSpecJavaTranslatorVisitor extends BickSpecBaseVisitor<Voi
             String identifier = context.ID().getText();
             if (context.functionCallSuffix() != null) {
                 calledFunctions.add(identifier);
-                return new JavaExpression(identifier + renderFunctionCallSuffix(context.functionCallSuffix()), null);
+                String comment = isBuiltInFunction(identifier) ? "BickSpec built-in" : null;
+                return new JavaExpression(identifier + renderFunctionCallSuffix(context.functionCallSuffix()), null, comment);
             }
             return new JavaExpression(identifier, null);
         }
@@ -394,7 +485,8 @@ public final class BickSpecJavaTranslatorVisitor extends BickSpecBaseVisitor<Voi
     }
 
     private JavaExpression renderMoneyLiteral(BickSpecParser.MoneyLiteralContext context) {
-        return new JavaExpression(renderNumber(context.numberLiteral()), context.currency().getText());
+        String currency = context.currency().getText();
+        return new JavaExpression(moneyExpression(renderNumber(context.numberLiteral()), currency), currency);
     }
 
     private JavaExpression renderTimeLiteral(BickSpecParser.TimeLiteralContext context) {
@@ -408,6 +500,7 @@ public final class BickSpecJavaTranslatorVisitor extends BickSpecBaseVisitor<Voi
     private JavaExpression renderOperatorChain(ParserRuleContext context) {
         StringBuilder expression = new StringBuilder();
         String unit = null;
+        String comment = null;
         for (int index = 0; index < context.getChildCount(); index++) {
             if (index > 0) {
                 expression.append(' ');
@@ -417,8 +510,11 @@ public final class BickSpecJavaTranslatorVisitor extends BickSpecBaseVisitor<Voi
             if (childExpression.unit() != null) {
                 unit = childExpression.unit();
             }
+            if (childExpression.comment() != null) {
+                comment = childExpression.comment();
+            }
         }
-        return new JavaExpression(expression.toString(), unit);
+        return new JavaExpression(expression.toString(), unit, comment);
     }
 
     private JavaExpression renderChild(ParseTree child) {
@@ -464,6 +560,39 @@ public final class BickSpecJavaTranslatorVisitor extends BickSpecBaseVisitor<Voi
         return context.expr().getText().startsWith("\"");
     }
 
+    private Path resolveImportModule(String module) {
+        String filename = module + ".bks";
+        Path sourcePath = Path.of(sourceDisplayPath);
+        List<Path> candidates = new ArrayList<>();
+        Path sourceParent = sourcePath.getParent();
+        if (sourceParent != null) {
+            candidates.add(sourceParent.resolve(filename));
+            candidates.add(sourceParent.resolve("libraries").resolve(filename));
+            candidates.add(sourceParent.resolve("modules").resolve(filename));
+        }
+        candidates.add(Path.of("testing", filename));
+        candidates.add(Path.of("testing", "libraries", filename));
+        candidates.add(Path.of("testing", "modules", filename));
+        for (Path candidate : candidates) {
+            if (Files.isRegularFile(candidate)) {
+                return candidate;
+            }
+        }
+        return null;
+    }
+
+    private static String displayCurrency(BickSpecParser.ExprContext context) {
+        for (int index = 1; index + 1 < context.getChildCount(); index++) {
+            if ("in".equals(context.getChild(index).getText())) {
+                String unit = context.getChild(index + 1).getText();
+                if (isCurrency(unit)) {
+                    return unit;
+                }
+            }
+        }
+        return null;
+    }
+
     private static String promptText(BickSpecParser.DisplayStmtContext context) {
         String literal = context.expr().getText();
         if (literal.length() >= 2 && literal.startsWith("\"") && literal.endsWith("\"")) {
@@ -482,10 +611,25 @@ public final class BickSpecJavaTranslatorVisitor extends BickSpecBaseVisitor<Voi
         return " // \"" + unit + "\"";
     }
 
+    private static String moneyExpression(String amount, String currency) {
+        return "USD".equals(currency) ? amount : "toUsd(" + amount + ", \"" + currency + "\")";
+    }
+
+    private static boolean isCurrency(String unit) {
+        return "USD".equals(unit) || "GTQ".equals(unit) || "EUR".equals(unit);
+    }
+
+    private static boolean isBuiltInFunction(String functionName) {
+        return "NPV".equals(functionName) || "PAYBACK".equals(functionName);
+    }
+
     private static String escapeJava(String text) {
         return text.replace("\\", "\\\\").replace("\"", "\\\"");
     }
 
-    private record JavaExpression(String code, String unit) {
+    private record JavaExpression(String code, String unit, String comment) {
+        JavaExpression(String code, String unit) {
+            this(code, unit, null);
+        }
     }
 }

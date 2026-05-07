@@ -12,7 +12,7 @@ import org.antlr.v4.runtime.misc.Interval;
 import org.antlr.v4.runtime.tree.TerminalNode;
 
 public final class BickSpecSemanticVisitor extends BickSpecBaseVisitor<Void> {
-    private static final Set<String> BUILTIN_FUNCTIONS = Set.of("NPV");
+    private static final Set<String> BUILTIN_FUNCTIONS = Set.of("NPV", "PAYBACK");
 
     private final List<String> trace = new ArrayList<>();
     private final List<CompilerDiagnostic> diagnostics = new ArrayList<>();

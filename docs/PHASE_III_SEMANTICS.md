@@ -15,6 +15,26 @@ The compiler pipeline is:
 
 Java generation is allowed only when lexical, syntax, and semantic validation all succeed. Symbol-table CSV files are also generated only after a successful parse and successful semantic validation.
 
+## Java generation and runtime model
+
+`TranspileRunner` writes generated Java files under `testing/generated/` only after all gates pass. Each generated file has a `main` method for the project block, helper methods, and a header documenting the BickSpec runtime model.
+
+Money is stored internally as USD:
+
+- `USD` literals are stored directly.
+- `GTQ` and `EUR` literals are converted with `toUsd(amount, currency)`.
+- FX declarations use the rule `1 USD = FX currency`.
+- `DISPLAY expr in GTQ` and `DISPLAY expr in EUR` convert with `fromUsd(...)` for presentation only and do not change stored values.
+
+Official built-ins are emitted as real Java helpers:
+
+- `private static double NPV(double rate, double capex, double... cashflows)`
+- `private static double PAYBACK(double capex, double... cashflows)`
+
+Imports such as `IMPORT finance` are represented as generated Java runtime module markers. Multi-file linking is intentionally kept lightweight for this phase; imported built-ins used by the official fixtures are available through generated helper methods.
+
+Batch assignments expand to explicit Java assignments. Shared money and time metadata is preserved across every expanded target.
+
 ## Diagnostic codes
 
 All compiler errors use the same console format:

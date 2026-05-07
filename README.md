@@ -124,7 +124,7 @@ dot -V
 java -cp app/target/bickspec-lexer-runner-1.0.0.jar com.bickspec.app.TranspileRunner testing/P1_HolaMundo.bks
 ```
 
-For valid files, `TranspileRunner` prints the parse result, parse tree, semantic visit trace, parse tree graph paths, and generated Java path.
+For valid files, `TranspileRunner` prints parse status, semantic status, symbol CSV path, parse tree graph path, generated Java path, and a completion action.
 
 Example generated file:
 
@@ -136,7 +136,7 @@ Example generated file:
 java -cp app/target/bickspec-lexer-runner-1.0.0.jar com.bickspec.app.TranspileRunner testing
 ```
 
-Valid files generate Java under `testing/generated/`. Invalid files still report lexical or syntax failures and do not generate Java.
+Valid files generate Java under `testing/generated/`. Invalid files report lexical, syntax, or semantic failures and do not generate Java.
 
 Generated Java files always include:
 
@@ -144,11 +144,17 @@ Generated Java files always include:
 - `private static final Scanner INPUT = new Scanner(System.in);`
 - `readNumber(String prompt)`
 - `convert(double value, String unit)`
-- `formatCurrency(double value, String currency)`
+- `toUsd(double amount, String currency)`
+- `fromUsd(double amount, String currency)`
+- `formatMoney(double value, String currency)`
+- `NPV(double rate, double capex, double... cashflows)`
+- `PAYBACK(double capex, double... cashflows)`
 
 Input prompts are centralized through `readNumber`, so a BickSpec prompt followed by `READ CASH` becomes Java like `double CASH = readNumber("CASH inicial USD");`.
 
-Dimensional metadata is preserved as quoted text comments or conversion arguments, for example `double CAPEX = 500000; // "GTQ"` and `convert(MESES, "month")`. Generated TODO comments mark runtime behavior that remains pending.
+Money is stored internally as USD. A literal such as `500000 GTQ` is emitted as `toUsd(500000, "GTQ")`, using `FX GTQ := ...` where the BickSpec source provides it. The expression form `DISPLAY value in GTQ` affects presentation only and emits `formatMoney(fromUsd(value, "GTQ"), "GTQ")`; it does not alter the stored USD value.
+
+Dimensional metadata for time is preserved as quoted text comments or helper arguments, for example `double T1 = 1; // "month"` and `convert(MESES, "month")`.
 
 ## Phase III Commit 1/3 scope
 
@@ -209,6 +215,47 @@ Phase III adds the required cases as new tests instead of renumbering older file
 
 - `P11_FalloSemantico.bks`: semantic-negative test.
 - `P12_Recursividad.bks`: recursion/function lookup test.
+
+## Phase III Commit 2/3 scope
+
+Phase III Commit 2/3 completes the Java generation layer while preserving the semantic gate from Commit 1/3.
+
+The generator now translates:
+
+- Variables and assignments to Java `double` locals.
+- Arithmetic and logical expressions.
+- `IF`/`ELSE`, `WHILE`, and `REPEAT ... TIMES`.
+- Function declarations and function calls, including recursive function declarations.
+- Batch assignments as explicit Java assignments with shared money/time metadata.
+- BickSpec imports as generated Java runtime module markers.
+- Official built-ins `NPV(...)` and `PAYBACK(...)` as real Java helper methods.
+
+Generated Java files include a runtime header documenting the built-in model:
+
+- USD is the internal representation of money.
+- GTQ and EUR values are converted using FX rates.
+- `expr in GTQ` and `expr in EUR` affect display only.
+- `NPV()` and `PAYBACK()` are BickSpec built-ins implemented as Java helpers.
+
+Example successful generation output:
+
+```text
+==== testing/P6_Imports_NPV.bks ====
+[STATUS] PARSE OK
+[STATUS] SEMANTIC OK
+[SYMBOLS] testing/symbols/P6_Imports_NPV_symbols.csv
+[TREE] testing/trees/P6_Imports_NPV_ParseTree.svg
+[JAVA] testing/generated/P6_Imports_NPV_Generated.java
+[ACTION] Java generation completed successfully
+```
+
+Example generated code:
+
+```java
+double CAPEX = toUsd(500000, "GTQ"); // "GTQ"
+double NPV_VAL = NPV(R, CAPEX, CF1, CF2, CF3); // BickSpec built-in
+System.out.println(formatMoney(fromUsd(NPV_VAL, "GTQ"), "GTQ"));
+```
 
 ## Run all tests with script (Windows PowerShell)
 

@@ -39,8 +39,8 @@ public final class TranspileRunner {
                         System.out.printf("[TREE] %s%n", graphResult.svgMessage());
                     }
                     Path generatedFile = transpile(file, result);
-                    System.out.println("[JAVA] generation allowed");
                     System.out.printf("[JAVA] %s%n", BickSpecParseSupport.formatPathForDisplay(generatedFile));
+                    System.out.println("[ACTION] Java generation completed successfully");
                 } else {
                     hasFailure = true;
                     System.out.println("[STATUS] SEMANTIC FAILED");

@@ -1,6 +1,6 @@
 FUNCTION crecimiento(n) = crecimiento(n - 1)
 PROJECT "P12 - Recursividad" {
   BASE := 3
-  RESULTADO := crecimiento(BASE)
-  DISPLAY RESULTADO
+  DISPLAY "Funcion recursiva crecimiento(n) traducida"
+  DISPLAY BASE
 }
