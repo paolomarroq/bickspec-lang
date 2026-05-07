@@ -353,6 +353,8 @@ bickspec-lang/
 
 BickSpec is complete through Phase III as a command-line compiler/transpiler. The current product can tokenize, parse, semantically validate, generate Java, compile generated Java, execute valid programs, export symbol tables, generate parse-tree artifacts, and report structured diagnostics.
 
+The repository also includes a VS Code plugin frontend for the compiler. Its documentation lives in [vscode-extension/README.md](vscode-extension/README.md).
+
 Future or optional work could include:
 
 - an IDE or editor extension;
