@@ -1,29 +1,19 @@
-# BickSpec Language Support
+# BickSpec Finance DSL for VS Code
 
-BickSpec Language Support is a Visual Studio Code extension for `.bks` files written in BickSpec, a finance and economic engineering DSL.
+![BickSpec icon](media/bickspec-icon.png)
 
-The extension provides editor support and command integration with the existing BickSpec compiler jar. It does not reimplement compiler logic inside VS Code.
+BickSpec Finance DSL is a Visual Studio Code extension for `.bks` files written in BickSpec, a finance and economic engineering DSL. It provides a polished editor experience around the existing BickSpec compiler while keeping the compiler implementation in the main Java/ANTLR project.
 
-## Current Support
+The extension does not reimplement the language compiler. It invokes the existing `bickspec-compiler-1.0.0.jar` and presents the compiler workflow inside VS Code.
+
+## What the Plugin Does
 
 - Registers the `bickspec` language id.
 - Associates `.bks` files with BickSpec.
-- Provides line comments with `#`.
-- Provides block comments with `/* ... */`.
-- Supports bracket matching and auto-closing pairs.
-- Adds TextMate syntax highlighting for:
-  - language declarations and control flow;
-  - input/output keywords;
-  - currency and time units;
-  - strings, numbers, identifiers, comments, and operators.
-- Adds snippets for common BickSpec constructs:
-  - `PROJECT` block;
-  - `IF / THEN / ELSE / END`;
-  - `WHILE / DO / END`;
-  - `FUNCTION`;
-  - `FX`;
-  - `DISPLAY`;
-  - `READ`.
+- Provides branded syntax highlighting scopes and an optional **BickSpec Academic** color theme.
+- Adds snippets for common BickSpec constructs.
+- Adds line comments with `#` and block comments with `/* ... */`.
+- Supports bracket matching, auto-closing pairs, and surrounding pairs.
 - Runs the existing compiler pipeline from VS Code:
   - parse;
   - semantic validation;
@@ -31,30 +21,67 @@ The extension provides editor support and command integration with the existing 
   - generated Java build;
   - generated program execution.
 - Shows compiler output in a dedicated **BickSpec Compiler** output channel.
-- Converts compiler `[ERROR]` diagnostics into VS Code editor markers when the compiler reports a source location.
-- Opens generated Java, symbol table CSV, and parse tree SVG artifacts when they exist.
+- Converts compiler `[ERROR]` lines into VS Code diagnostics when source locations are available.
+- Adds status bar shortcuts while a `.bks` file is active.
+- Opens generated Java, symbol table CSV, and parse tree SVG artifacts.
 
-## Compiler Jar
+## Visual Identity
 
-The extension invokes the existing compiler jar:
+The plugin uses a compact BickSpec icon and a restrained academic palette:
+
+- Navy primary: `#0F274A`
+- Slate blue: `#475569`
+- Teal accent: `#14C7BE`
+- Secondary teal/cyan: `#1DD6C3`
+- Light neutral: `#F3F4F6`
+
+The provided visual reference is kept at `../docs/bksicon.png` and `../docs/bks.ico` when present. The extension package icon is a VS Code-ready 128x128 PNG at `media/bickspec-icon.png`, with an editable SVG companion at `media/bickspec-icon.svg`.
+
+## Development Installation
+
+Open the extension folder in VS Code:
+
+```text
+vscode-extension/
+```
+
+Run the syntax check:
+
+```bash
+npm run check
+```
+
+No build step is required because the extension uses plain JavaScript.
+
+## Launch in Extension Development Host
+
+1. Open `vscode-extension/` in Visual Studio Code.
+2. Press `F5`, or open **Run and Debug** and choose **Launch Extension**.
+3. In the Extension Development Host window, open a `.bks` file.
+4. Confirm the language mode is **BickSpec**.
+5. Optionally select **BickSpec Academic** from **Preferences: Color Theme**.
+
+## Compiler Jar Configuration
+
+The extension invokes:
 
 ```text
 bickspec-compiler-1.0.0.jar
 ```
 
-By default, it looks for the jar at:
+By default, it looks for:
 
 ```text
 app/target/bickspec-compiler-1.0.0.jar
 ```
 
-If the jar does not exist, build it from the repository root:
+If the jar is missing, build it from the repository root:
 
 ```bash
 mvn -f app/pom.xml package
 ```
 
-You can also configure a custom jar path in VS Code settings:
+You can set a custom jar path in VS Code settings:
 
 ```json
 {
@@ -75,24 +102,30 @@ Open the Command Palette and run:
 - **BickSpec: Open Symbol Table CSV**
 - **BickSpec: Open Parse Tree SVG**
 
+When a `.bks` file is active, the status bar also shows:
+
+- `$(play) BickSpec` to run the current file;
+- `$(output) BickSpec Output` to open the compiler output channel.
+
 ## Run the Current File
 
-1. Open a `.bks` file.
-2. Run **BickSpec: Run Current File** from the Command Palette, editor title action, or Explorer context menu.
-3. The extension runs:
+1. Open a `.bks` file, for example `testing/P1_HolaMundo.bks`.
+2. Run **BickSpec: Run Current File** from the Command Palette, editor title action, Explorer context menu, or status bar.
+3. The extension saves the active file if needed.
+4. The extension runs:
 
    ```bash
    java -jar path/to/bickspec-compiler-1.0.0.jar path/to/file.bks
    ```
 
-4. Output is written to **BickSpec Compiler**.
-5. Diagnostics such as `[ERROR] SEM01 - Variable 'X' used before declaration at line 2:11` are shown as VS Code error markers.
+5. Compiler output appears in **BickSpec Compiler**.
+6. If the compiler reports errors with line/column locations, VS Code editor markers are created.
 
 ## Run a Folder
 
 Run **BickSpec: Run Folder** from the Command Palette or from a folder in the Explorer context menu.
 
-If no folder is selected, the command uses the current workspace folder. The extension passes the folder path to the compiler jar, preserving the existing compiler behavior for directory mode.
+If no folder is selected, the command uses the current workspace folder. The selected folder is passed directly to the compiler jar, preserving the existing compiler directory-mode behavior.
 
 ## Diagnostics
 
@@ -103,13 +136,26 @@ The extension parses compiler lines that start with these diagnostic families:
 - `[ERROR] SEM...`
 - `[ERROR] GEN...`
 
-When the compiler includes a location in the format `at line <line>:<column>`, the extension creates a VS Code error marker at that location. During folder runs, diagnostics are associated with the current compiler file header when possible.
+Example compiler diagnostic:
+
+```text
+[ERROR] SEM01 - Variable 'X' used before declaration at line 2:11
+```
+
+VS Code marker:
+
+- severity: Error;
+- source: BickSpec;
+- code: `SEM01`;
+- location: line 2, column 11.
+
+During folder runs, diagnostics are attached to the current compiler file header when possible.
 
 ## Interactive Programs
 
-BickSpec programs that contain `READ` require real terminal input. When the extension detects `READ` in the current file, or in any direct `.bks` file inside a selected folder, it runs the compiler in the integrated terminal instead of only using the output channel.
+BickSpec programs that contain `READ` require real terminal input. When the extension detects `READ` in the current file, or in any direct `.bks` file inside a selected folder, it runs the compiler in the integrated terminal.
 
-This preserves prompts and user input exactly as the compiler expects. Interactive terminal runs still log launch details to **BickSpec Compiler**, but they do not provide captured output-channel diagnostics because the process is owned by the terminal.
+This preserves prompts and user input exactly as the compiler expects. The output channel still records launch details, but the interactive process itself belongs to the terminal.
 
 ## Generated Artifacts
 
@@ -127,18 +173,36 @@ output/symbols
 output/trees
 ```
 
-## Launch in VS Code Extension Development Host
+## Snippet Examples
 
-1. Open this folder in Visual Studio Code:
+Type `project`:
 
-   ```text
-   vscode-extension/
-   ```
+```bickspec
+PROJECT "Project Name" {
+  DISPLAY "Hello BickSpec"
+}
+```
 
-2. Press `F5`, or open **Run and Debug** and select **Launch Extension**.
+Type `fx`:
 
-3. In the Extension Development Host window, open any `.bks` file.
+```bickspec
+FX GTQ := 7.80
+```
 
-4. Confirm the language mode is **BickSpec** and try snippets such as `project`, `if`, `while`, `function`, `fx`, `display`, or `read`.
+## Demo Walkthrough
 
-5. Build the compiler jar if needed, then run **BickSpec: Run Current File** on a `.bks` source file.
+1. Build the compiler jar with `mvn -f app/pom.xml package`.
+2. Launch the extension with `F5`.
+3. Open `testing/P1_HolaMundo.bks`.
+4. Choose the **BickSpec Academic** color theme.
+5. Run **BickSpec: Run Current File**.
+6. Review the **BickSpec Compiler** output channel.
+7. Open generated artifacts with:
+   - **BickSpec: Open Generated Java**;
+   - **BickSpec: Open Symbol Table CSV**;
+   - **BickSpec: Open Parse Tree SVG**.
+8. Open `testing/P11_FalloSemantico.bks` and run it to demonstrate semantic diagnostics in the editor.
+
+## Scope
+
+This plugin is intentionally lightweight and demo-friendly. It provides editor support, compiler execution, diagnostics, generated artifact access, and branded presentation without adding a full language server.

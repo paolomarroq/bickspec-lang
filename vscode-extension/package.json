@@ -1,13 +1,24 @@
 {
-  "name": "bickspec-language-support",
-  "displayName": "BickSpec Language Support",
-  "description": "Language support for BickSpec, a finance and economic engineering DSL.",
-  "version": "0.1.0",
+  "name": "bickspec-finance-dsl",
+  "displayName": "BickSpec Finance DSL",
+  "description": "Professional VS Code support for BickSpec, a finance and economic engineering DSL with compiler integration.",
+  "version": "0.3.0",
   "publisher": "bickspec",
   "license": "MIT",
+  "icon": "media/bickspec-icon.png",
   "main": "./extension.js",
   "engines": {
     "vscode": "^1.90.0"
+  },
+  "extensionKind": [
+    "workspace"
+  ],
+  "scripts": {
+    "check": "node --check extension.js"
+  },
+  "galleryBanner": {
+    "color": "#0F274A",
+    "theme": "dark"
   },
   "activationEvents": [
     "onLanguage:bickspec",
@@ -20,9 +31,10 @@
   ],
   "categories": [
     "Programming Languages",
-    "Snippets"
+    "Snippets",
+    "Themes"
   ],
-  "keywords": [
+    "keywords": [
     "bickspec",
     "dsl",
     "finance",
@@ -54,6 +66,13 @@
       {
         "language": "bickspec",
         "path": "./snippets/bickspec.code-snippets"
+      }
+    ],
+    "themes": [
+      {
+        "label": "BickSpec Academic",
+        "uiTheme": "vs",
+        "path": "./themes/bickspec-academic-color-theme.json"
       }
     ],
     "commands": [

@@ -1,0 +1,118 @@
+{
+  "$schema": "vscode://schemas/color-theme",
+  "name": "BickSpec Academic",
+  "type": "light",
+  "semanticHighlighting": true,
+  "colors": {
+    "editor.background": "#F3F4F6",
+    "editor.foreground": "#0F274A",
+    "editorLineNumber.foreground": "#64748B",
+    "editorCursor.foreground": "#14C7BE",
+    "editor.selectionBackground": "#1DD6C344",
+    "editor.inactiveSelectionBackground": "#1DD6C322",
+    "editor.lineHighlightBackground": "#E5E7EB",
+    "editorBracketMatch.background": "#14C7BE22",
+    "editorBracketMatch.border": "#14C7BE"
+  },
+  "tokenColors": [
+    {
+      "name": "BickSpec control keywords",
+      "scope": [
+        "keyword.control.bickspec",
+        "keyword.declaration.bickspec"
+      ],
+      "settings": {
+        "foreground": "#0F274A",
+        "fontStyle": "bold"
+      }
+    },
+    {
+      "name": "BickSpec input and output",
+      "scope": "keyword.other.io.bickspec",
+      "settings": {
+        "foreground": "#0F274A",
+        "fontStyle": "bold"
+      }
+    },
+    {
+      "name": "BickSpec conversions",
+      "scope": "keyword.operator.conversion.bickspec",
+      "settings": {
+        "foreground": "#475569",
+        "fontStyle": "italic"
+      }
+    },
+    {
+      "name": "BickSpec currencies and built-ins",
+      "scope": [
+        "constant.language.currency.bickspec",
+        "support.function.builtin.bickspec"
+      ],
+      "settings": {
+        "foreground": "#14C7BE",
+        "fontStyle": "bold"
+      }
+    },
+    {
+      "name": "BickSpec time units",
+      "scope": "constant.language.time-unit.bickspec",
+      "settings": {
+        "foreground": "#475569"
+      }
+    },
+    {
+      "name": "BickSpec strings",
+      "scope": "string.quoted.double.bickspec",
+      "settings": {
+        "foreground": "#0E8F89"
+      }
+    },
+    {
+      "name": "BickSpec comments",
+      "scope": [
+        "comment.line.number-sign.bickspec",
+        "comment.block.bickspec"
+      ],
+      "settings": {
+        "foreground": "#64748B",
+        "fontStyle": "italic"
+      }
+    },
+    {
+      "name": "BickSpec numbers",
+      "scope": [
+        "constant.numeric.float.bickspec",
+        "constant.numeric.integer.bickspec"
+      ],
+      "settings": {
+        "foreground": "#2563EB"
+      }
+    },
+    {
+      "name": "BickSpec operators",
+      "scope": [
+        "keyword.operator.assignment.bickspec",
+        "keyword.operator.comparison.bickspec",
+        "keyword.operator.logical.bickspec",
+        "keyword.operator.arithmetic.bickspec"
+      ],
+      "settings": {
+        "foreground": "#475569"
+      }
+    },
+    {
+      "name": "BickSpec functions",
+      "scope": "entity.name.function.bickspec",
+      "settings": {
+        "foreground": "#0F274A"
+      }
+    },
+    {
+      "name": "BickSpec identifiers",
+      "scope": "variable.other.identifier.bickspec",
+      "settings": {
+        "foreground": "#1F2937"
+      }
+    }
+  ]
+}

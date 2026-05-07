@@ -8,21 +8,39 @@ let outputChannel;
 let diagnostics;
 let lastRunTarget;
 let lastRunWorkspace;
+let runStatusBarItem;
+let outputStatusBarItem;
 
 function activate(context) {
   outputChannel = vscode.window.createOutputChannel("BickSpec Compiler");
   diagnostics = vscode.languages.createDiagnosticCollection("bickspec");
+  runStatusBarItem = vscode.window.createStatusBarItem("bickspec.run", vscode.StatusBarAlignment.Left, 90);
+  runStatusBarItem.text = "$(play) BickSpec";
+  runStatusBarItem.tooltip = "Run the current BickSpec file";
+  runStatusBarItem.command = "bickspec.runCurrentFile";
+
+  outputStatusBarItem = vscode.window.createStatusBarItem("bickspec.output", vscode.StatusBarAlignment.Left, 89);
+  outputStatusBarItem.text = "$(output) BickSpec Output";
+  outputStatusBarItem.tooltip = "Show BickSpec compiler output";
+  outputStatusBarItem.command = "bickspec.showCompilerOutput";
 
   context.subscriptions.push(
     outputChannel,
     diagnostics,
+    runStatusBarItem,
+    outputStatusBarItem,
     vscode.commands.registerCommand("bickspec.runCurrentFile", runCurrentFile),
     vscode.commands.registerCommand("bickspec.runFolder", runFolder),
     vscode.commands.registerCommand("bickspec.showCompilerOutput", showCompilerOutput),
     vscode.commands.registerCommand("bickspec.openGeneratedJava", () => openArtifact("java")),
     vscode.commands.registerCommand("bickspec.openSymbolTable", () => openArtifact("symbols")),
-    vscode.commands.registerCommand("bickspec.openParseTreeSvg", () => openArtifact("tree"))
+    vscode.commands.registerCommand("bickspec.openParseTreeSvg", () => openArtifact("tree")),
+    vscode.window.onDidChangeActiveTextEditor(updateBickSpecStatusBar),
+    vscode.workspace.onDidOpenTextDocument(updateBickSpecStatusBar),
+    vscode.workspace.onDidCloseTextDocument(updateBickSpecStatusBar)
   );
+
+  updateBickSpecStatusBar();
 }
 
 function deactivate() {
@@ -85,6 +103,18 @@ async function runFolder(uri) {
 
 function showCompilerOutput() {
   outputChannel.show(true);
+}
+
+function updateBickSpecStatusBar() {
+  const isBickSpec = Boolean(activeBksFile());
+  vscode.commands.executeCommand("setContext", "bickspec:isActiveFile", isBickSpec);
+  if (isBickSpec) {
+    runStatusBarItem.show();
+    outputStatusBarItem.show();
+  } else {
+    runStatusBarItem.hide();
+    outputStatusBarItem.hide();
+  }
 }
 
 async function resolveFolderTarget(uri) {

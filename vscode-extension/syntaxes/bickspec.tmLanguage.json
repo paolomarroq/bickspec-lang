@@ -22,6 +22,9 @@
       "include": "#timeUnits"
     },
     {
+      "include": "#builtins"
+    },
+    {
       "include": "#numbers"
     },
     {
@@ -97,6 +100,14 @@
         {
           "name": "constant.language.time-unit.bickspec",
           "match": "\\b(?:year|month|quarter|week|day)\\b"
+        }
+      ]
+    },
+    "builtins": {
+      "patterns": [
+        {
+          "name": "support.function.builtin.bickspec",
+          "match": "\\b(?:NPV|PAYBACK)(?=\\s*\\()"
         }
       ]
     },
