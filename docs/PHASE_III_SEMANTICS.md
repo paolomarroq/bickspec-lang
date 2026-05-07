@@ -4,7 +4,7 @@ Phase III adds a real semantic-analysis foundation after ANTLR parsing and befor
 
 The final compiler entry point is the packaged jar:
 
-`java -jar app/target/bickspec-lexer-runner-1.0.0.jar <path-to-file-or-directory>`
+`java -jar app/target/bickspec-compiler-1.0.0.jar <path-to-file-or-directory>`
 
 The repository stops at automatic Java source generation. Generated files under `testing/generated/` can be compiled and tested manually after the compiler run.
 

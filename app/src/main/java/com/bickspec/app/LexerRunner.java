@@ -18,7 +18,7 @@ public final class LexerRunner {
 
     public static void main(String[] args) {
         if (args.length != 1) {
-            System.err.println("Usage: java -jar app/target/bickspec-lexer-runner-1.0.0.jar <path-to-file-or-directory>");
+            System.err.println("Usage: java -cp app/target/bickspec-compiler-1.0.0.jar com.bickspec.app.LexerRunner <path-to-file-or-directory>");
             System.exit(1);
         }
 

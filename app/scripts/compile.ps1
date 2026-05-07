@@ -1,5 +1,5 @@
 param(
-    [string]$JarPath = "app/target/bickspec-lexer-runner-1.0.0.jar",
+    [string]$JarPath = "app/target/bickspec-compiler-1.0.0.jar",
     [string]$InputPath = "testing"
 )
 

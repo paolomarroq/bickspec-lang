@@ -99,7 +99,7 @@ Or in IntelliJ IDEA:
 
 Example jar produced:
 
-`app/target/bickspec-lexer-runner-1.0.0.jar`
+`app/target/bickspec-compiler-1.0.0.jar`
 
 The jar is the executable compiler entry point and runs `TranspileRunner` by default.
 
@@ -108,7 +108,7 @@ Use UTF-8 for `.bks` source files, generated `.java` files, and IDE/project enco
 ## Run the compiler on one file
 
 ```bash
-java -jar app/target/bickspec-lexer-runner-1.0.0.jar testing/P6_Imports_NPV.bks
+java -jar app/target/bickspec-compiler-1.0.0.jar testing/P6_Imports_NPV.bks
 ```
 
 PowerShell wrapper:
@@ -120,7 +120,7 @@ PowerShell wrapper:
 ## Run the compiler on the full test suite
 
 ```bash
-java -jar app/target/bickspec-lexer-runner-1.0.0.jar testing
+java -jar app/target/bickspec-compiler-1.0.0.jar testing
 ```
 
 PowerShell wrapper:
@@ -159,13 +159,13 @@ Directory runs also write a summary report:
 ## Run lexer on one test file
 
 ```bash
-java -cp app/target/bickspec-lexer-runner-1.0.0.jar com.bickspec.app.LexerRunner testing/P1_HolaMundo.bks
+java -cp app/target/bickspec-compiler-1.0.0.jar com.bickspec.app.LexerRunner testing/P1_HolaMundo.bks
 ```
 
 ## Run lexer on all tests (directory mode)
 
 ```bash
-java -jar app/target/bickspec-lexer-runner-1.0.0.jar testing
+java -jar app/target/bickspec-compiler-1.0.0.jar testing
 ```
 
 When a directory is provided, the runner processes all `*.bks` files in filename order and prints file headers like:
@@ -175,7 +175,7 @@ When a directory is provided, the runner processes all `*.bks` files in filename
 ## Run parser validation on one test file
 
 ```bash
-java -cp app/target/bickspec-lexer-runner-1.0.0.jar com.bickspec.app.ParseRunner testing/P1_HolaMundo.bks
+java -cp app/target/bickspec-compiler-1.0.0.jar com.bickspec.app.ParseRunner testing/P1_HolaMundo.bks
 ```
 
 Expected output includes a file header, `[STATUS] PARSE OK`, `[STATUS] SEMANTIC OK`, a symbol CSV path, and a parse tree graph path.
@@ -185,7 +185,7 @@ For valid files, `ParseRunner` also writes graphical parse tree files under `tes
 ## Run parser validation on all tests
 
 ```bash
-java -cp app/target/bickspec-lexer-runner-1.0.0.jar com.bickspec.app.ParseRunner testing
+java -cp app/target/bickspec-compiler-1.0.0.jar com.bickspec.app.ParseRunner testing
 ```
 
 When a directory is provided, the parser runner processes all `*.bks` files in ascending test-number order. `P1` through `P8` and `P12` are expected to pass parse and semantic validation, `P9_FalloLexico.bks` is expected to fail lexically, `P10_FalloSintaxis.bks` is expected to fail syntactically, and `P11_FalloSemantico.bks` is expected to fail semantically.
@@ -212,7 +212,7 @@ dot -V
 ## Generate Java from one test file
 
 ```bash
-java -jar app/target/bickspec-lexer-runner-1.0.0.jar testing/P1_HolaMundo.bks
+java -jar app/target/bickspec-compiler-1.0.0.jar testing/P1_HolaMundo.bks
 ```
 
 For valid files, `TranspileRunner` prints parse status, semantic status, symbol CSV path, parse tree graph path, generated Java path, and a completion action.
@@ -224,7 +224,7 @@ Example generated file:
 ## Generate Java from all tests
 
 ```bash
-java -cp app/target/bickspec-lexer-runner-1.0.0.jar com.bickspec.app.LexerRunner testing
+java -cp app/target/bickspec-compiler-1.0.0.jar com.bickspec.app.LexerRunner testing
 ```
 
 Valid files generate Java under `testing/generated/`. Invalid files report lexical, syntax, or semantic failures and do not generate Java.

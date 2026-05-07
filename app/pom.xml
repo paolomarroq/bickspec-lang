@@ -4,9 +4,9 @@
     <modelVersion>4.0.0</modelVersion>
 
     <groupId>com.bickspec</groupId>
-    <artifactId>bickspec-lexer-runner</artifactId>
+    <artifactId>bickspec-compiler</artifactId>
     <version>1.0.0</version>
-    <name>bickspec-lexer-runner</name>
+    <name>bickspec-compiler</name>
 
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>

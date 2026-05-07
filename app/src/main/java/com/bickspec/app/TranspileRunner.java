@@ -17,7 +17,7 @@ public final class TranspileRunner {
 
     public static void main(String[] args) {
         if (args.length != 1) {
-            System.err.println("Usage: java -jar app/target/bickspec-lexer-runner-1.0.0.jar <path-to-file-or-directory>");
+            System.err.println("Usage: java -jar app/target/bickspec-compiler-1.0.0.jar <path-to-file-or-directory>");
             System.exit(1);
         }
 
