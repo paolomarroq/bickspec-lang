@@ -5,9 +5,19 @@
   "version": "0.1.0",
   "publisher": "bickspec",
   "license": "MIT",
+  "main": "./extension.js",
   "engines": {
     "vscode": "^1.90.0"
   },
+  "activationEvents": [
+    "onLanguage:bickspec",
+    "onCommand:bickspec.runCurrentFile",
+    "onCommand:bickspec.runFolder",
+    "onCommand:bickspec.showCompilerOutput",
+    "onCommand:bickspec.openGeneratedJava",
+    "onCommand:bickspec.openSymbolTable",
+    "onCommand:bickspec.openParseTreeSvg"
+  ],
   "categories": [
     "Programming Languages",
     "Snippets"
@@ -44,6 +54,71 @@
       {
         "language": "bickspec",
         "path": "./snippets/bickspec.code-snippets"
+      }
+    ],
+    "commands": [
+      {
+        "command": "bickspec.runCurrentFile",
+        "title": "BickSpec: Run Current File",
+        "category": "BickSpec"
+      },
+      {
+        "command": "bickspec.runFolder",
+        "title": "BickSpec: Run Folder",
+        "category": "BickSpec"
+      },
+      {
+        "command": "bickspec.showCompilerOutput",
+        "title": "BickSpec: Show Compiler Output",
+        "category": "BickSpec"
+      },
+      {
+        "command": "bickspec.openGeneratedJava",
+        "title": "BickSpec: Open Generated Java",
+        "category": "BickSpec"
+      },
+      {
+        "command": "bickspec.openSymbolTable",
+        "title": "BickSpec: Open Symbol Table CSV",
+        "category": "BickSpec"
+      },
+      {
+        "command": "bickspec.openParseTreeSvg",
+        "title": "BickSpec: Open Parse Tree SVG",
+        "category": "BickSpec"
+      }
+    ],
+    "menus": {
+      "editor/title": [
+        {
+          "command": "bickspec.runCurrentFile",
+          "when": "resourceExtname == .bks",
+          "group": "navigation"
+        }
+      ],
+      "explorer/context": [
+        {
+          "command": "bickspec.runCurrentFile",
+          "when": "resourceExtname == .bks",
+          "group": "bickspec@1"
+        },
+        {
+          "command": "bickspec.runFolder",
+          "when": "explorerResourceIsFolder",
+          "group": "bickspec@2"
+        }
+      ]
+    },
+    "configuration": [
+      {
+        "title": "BickSpec",
+        "properties": {
+          "bickspec.compiler.jarPath": {
+            "type": "string",
+            "default": "",
+            "description": "Path to bickspec-compiler-1.0.0.jar. Relative paths are resolved from the workspace folder. Leave empty to auto-detect app/target/bickspec-compiler-1.0.0.jar."
+          }
+        }
       }
     ]
   }

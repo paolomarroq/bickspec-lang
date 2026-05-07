@@ -1,0 +1,373 @@
+const vscode = require("vscode");
+const cp = require("child_process");
+const fs = require("fs");
+const path = require("path");
+
+const JAR_NAME = "bickspec-compiler-1.0.0.jar";
+let outputChannel;
+let diagnostics;
+let lastRunTarget;
+let lastRunWorkspace;
+
+function activate(context) {
+  outputChannel = vscode.window.createOutputChannel("BickSpec Compiler");
+  diagnostics = vscode.languages.createDiagnosticCollection("bickspec");
+
+  context.subscriptions.push(
+    outputChannel,
+    diagnostics,
+    vscode.commands.registerCommand("bickspec.runCurrentFile", runCurrentFile),
+    vscode.commands.registerCommand("bickspec.runFolder", runFolder),
+    vscode.commands.registerCommand("bickspec.showCompilerOutput", showCompilerOutput),
+    vscode.commands.registerCommand("bickspec.openGeneratedJava", () => openArtifact("java")),
+    vscode.commands.registerCommand("bickspec.openSymbolTable", () => openArtifact("symbols")),
+    vscode.commands.registerCommand("bickspec.openParseTreeSvg", () => openArtifact("tree"))
+  );
+}
+
+function deactivate() {
+  if (diagnostics) {
+    diagnostics.dispose();
+  }
+}
+
+async function runCurrentFile(uri) {
+  const editor = vscode.window.activeTextEditor;
+  const sourceFile = uri && uri.scheme === "file"
+    ? uri.fsPath
+    : editor && editor.document.uri.scheme === "file"
+      ? editor.document.fileName
+      : undefined;
+
+  if (!sourceFile || !sourceFile.toLowerCase().endsWith(".bks")) {
+    vscode.window.showErrorMessage("Open a .bks file before running BickSpec.");
+    return;
+  }
+
+  if (editor && editor.document.fileName === sourceFile && editor.document.isDirty) {
+    await editor.document.save();
+  }
+
+  const workspaceFolder = vscode.workspace.getWorkspaceFolder(vscode.Uri.file(sourceFile)) || firstWorkspaceFolder();
+  const workspaceRoot = resolveWorkspaceRoot(workspaceFolder);
+  lastRunTarget = sourceFile;
+  lastRunWorkspace = workspaceRoot;
+
+  const sourceText = editor && editor.document.fileName === sourceFile
+    ? editor.document.getText()
+    : await fs.promises.readFile(sourceFile, "utf8").catch(() => "");
+  if (/\bREAD\b/.test(sourceText)) {
+    runInTerminal(sourceFile, workspaceRoot, "Current file uses READ; running in the integrated terminal for interactive input.");
+    return;
+  }
+
+  await runCompiler(sourceFile, workspaceRoot, sourceFile);
+}
+
+async function runFolder(uri) {
+  const folder = await resolveFolderTarget(uri);
+  if (!folder) {
+    return;
+  }
+
+  const workspaceFolder = vscode.workspace.getWorkspaceFolder(vscode.Uri.file(folder)) || firstWorkspaceFolder();
+  const workspaceRoot = resolveWorkspaceRoot(workspaceFolder);
+  lastRunTarget = folder;
+  lastRunWorkspace = workspaceRoot;
+
+  if (await folderContainsRead(folder)) {
+    runInTerminal(folder, workspaceRoot, "Folder contains at least one .bks program with READ; running in the integrated terminal for interactive input.");
+    return;
+  }
+
+  await runCompiler(folder, workspaceRoot, activeBksFile());
+}
+
+function showCompilerOutput() {
+  outputChannel.show(true);
+}
+
+async function resolveFolderTarget(uri) {
+  if (uri && uri.scheme === "file") {
+    const stat = await fs.promises.stat(uri.fsPath).catch(() => null);
+    if (stat && stat.isDirectory()) {
+      return uri.fsPath;
+    }
+  }
+
+  const workspace = firstWorkspaceFolder();
+  if (workspace) {
+    return resolveWorkspaceRoot(workspace);
+  }
+
+  const selection = await vscode.window.showOpenDialog({
+    canSelectFiles: false,
+    canSelectFolders: true,
+    canSelectMany: false,
+    openLabel: "Run BickSpec Folder"
+  });
+  return selection && selection.length > 0 ? selection[0].fsPath : undefined;
+}
+
+async function runCompiler(targetPath, cwd, fallbackDiagnosticFile) {
+  const jarPath = await findCompilerJar(cwd);
+  if (!jarPath) {
+    vscode.window.showErrorMessage(`BickSpec compiler jar not found. Build it with: mvn -f app/pom.xml package`);
+    outputChannel.show(true);
+    outputChannel.appendLine("[FAILURE] Compiler jar not found.");
+    outputChannel.appendLine(`Expected ${JAR_NAME} under app/target, or configure bickspec.compiler.jarPath.`);
+    return;
+  }
+
+  diagnostics.clear();
+  outputChannel.show(true);
+  outputChannel.appendLine("");
+  outputChannel.appendLine(`[STARTING] BickSpec compiler`);
+  outputChannel.appendLine(`[JAR] ${jarPath}`);
+  outputChannel.appendLine(`[TARGET] ${targetPath}`);
+  outputChannel.appendLine(`[WORKING DIRECTORY] ${cwd}`);
+
+  const child = cp.spawn("java", ["-jar", jarPath, targetPath], {
+    cwd,
+    shell: false
+  });
+
+  let combined = "";
+  child.stdout.on("data", chunk => {
+    const text = chunk.toString();
+    combined += text;
+    outputChannel.append(text);
+  });
+  child.stderr.on("data", chunk => {
+    const text = chunk.toString();
+    combined += text;
+    outputChannel.append(text);
+  });
+  child.on("error", error => {
+    outputChannel.appendLine(`[FAILURE] Failed to start compiler: ${error.message}`);
+    vscode.window.showErrorMessage(`Failed to start BickSpec compiler: ${error.message}`);
+  });
+  child.on("close", exitCode => {
+    applyDiagnostics(combined, cwd, fallbackDiagnosticFile);
+    if (exitCode === 0) {
+      outputChannel.appendLine(`[SUCCESS] BickSpec compiler completed successfully.`);
+      vscode.window.showInformationMessage("BickSpec compiler completed successfully.");
+    } else {
+      outputChannel.appendLine(`[FAILURE] BickSpec compiler exited with code ${exitCode}.`);
+      vscode.window.showErrorMessage(`BickSpec compiler failed with exit code ${exitCode}. See BickSpec Compiler output.`);
+    }
+  });
+}
+
+function runInTerminal(targetPath, cwd, reason) {
+  findCompilerJar(cwd).then(jarPath => {
+    if (!jarPath) {
+      vscode.window.showErrorMessage("BickSpec compiler jar not found. Build it with: mvn -f app/pom.xml package");
+      return;
+    }
+
+    diagnostics.clear();
+    outputChannel.show(true);
+    outputChannel.appendLine("");
+    outputChannel.appendLine(`[STARTING] BickSpec compiler`);
+    outputChannel.appendLine(`[INTERACTIVE] ${reason}`);
+    outputChannel.appendLine(`[JAR] ${jarPath}`);
+    outputChannel.appendLine(`[TARGET] ${targetPath}`);
+    outputChannel.appendLine(`[WORKING DIRECTORY] ${cwd}`);
+
+    const terminal = vscode.window.createTerminal({
+      name: "BickSpec Interactive",
+      cwd
+    });
+    terminal.show();
+    terminal.sendText(`java -jar "${jarPath}" "${targetPath}"`);
+    outputChannel.appendLine("[STARTED] Interactive compiler process launched in the integrated terminal.");
+  });
+}
+
+async function findCompilerJar(cwd) {
+  const configured = vscode.workspace.getConfiguration("bickspec.compiler").get("jarPath");
+  const candidates = [];
+
+  if (configured && configured.trim()) {
+    candidates.push(path.isAbsolute(configured) ? configured : path.resolve(cwd, configured));
+  }
+
+  candidates.push(path.join(cwd, "app", "target", JAR_NAME));
+  candidates.push(path.join(path.dirname(cwd), "app", "target", JAR_NAME));
+  candidates.push(path.join(contextExtensionParent(), "app", "target", JAR_NAME));
+
+  for (const candidate of candidates) {
+    if (candidate && fs.existsSync(candidate)) {
+      return candidate;
+    }
+  }
+  const targetDirectories = [
+    path.join(cwd, "app", "target"),
+    path.join(path.dirname(cwd), "app", "target"),
+    path.join(contextExtensionParent(), "app", "target")
+  ];
+  for (const directory of targetDirectories) {
+    const discovered = discoverCompilerJar(directory);
+    if (discovered) {
+      return discovered;
+    }
+  }
+  return undefined;
+}
+
+function discoverCompilerJar(directory) {
+  if (!fs.existsSync(directory)) {
+    return undefined;
+  }
+  const matches = fs.readdirSync(directory)
+    .filter(file => /^bickspec-compiler-.*\.jar$/.test(file) && !file.startsWith("original-"))
+    .sort();
+  return matches.length > 0 ? path.join(directory, matches[matches.length - 1]) : undefined;
+}
+
+async function folderContainsRead(folder) {
+  const entries = await fs.promises.readdir(folder, { withFileTypes: true }).catch(() => []);
+  for (const entry of entries) {
+    if (!entry.isFile() || !entry.name.toLowerCase().endsWith(".bks")) {
+      continue;
+    }
+    const file = path.join(folder, entry.name);
+    const text = await fs.promises.readFile(file, "utf8").catch(() => "");
+    if (/\bREAD\b/.test(text)) {
+      return true;
+    }
+  }
+  return false;
+}
+
+function applyDiagnostics(output, cwd, fallbackDiagnosticFile) {
+  const byFile = new Map();
+  let currentFile = fallbackDiagnosticFile;
+
+  for (const rawLine of output.split(/\r?\n/)) {
+    const header = rawLine.match(/^====\s+(.+?)\s+====$/);
+    if (header) {
+      currentFile = resolveCompilerPath(header[1], cwd);
+      continue;
+    }
+
+    const diagnostic = parseDiagnosticLine(rawLine);
+    if (!diagnostic) {
+      continue;
+    }
+
+    const file = currentFile || fallbackDiagnosticFile;
+    if (!file) {
+      continue;
+    }
+
+    const uri = vscode.Uri.file(file);
+    const list = byFile.get(uri.toString()) || [];
+    list.push(diagnostic);
+    byFile.set(uri.toString(), list);
+  }
+
+  for (const [uriText, list] of byFile.entries()) {
+    diagnostics.set(vscode.Uri.parse(uriText), list);
+  }
+}
+
+function parseDiagnosticLine(line) {
+  const match = line.match(/^\[ERROR\]\s+((?:LEX|SYN|SEM|GEN)\d*)\s+-\s+(.+?)(?:\s+at line\s+(\d+):(\d+))?\s*$/);
+  if (!match) {
+    return undefined;
+  }
+
+  const lineNumber = match[3] ? Math.max(0, Number(match[3]) - 1) : 0;
+  const column = match[4] ? Math.max(0, Number(match[4])) : 0;
+  const range = new vscode.Range(lineNumber, column, lineNumber, column + 1);
+  const diagnostic = new vscode.Diagnostic(range, `${match[1]} - ${match[2]}`, vscode.DiagnosticSeverity.Error);
+  diagnostic.source = "BickSpec";
+  diagnostic.code = match[1];
+  return diagnostic;
+}
+
+async function openArtifact(kind) {
+  const sourceFile = activeBksFile() || (lastRunTarget && lastRunTarget.toLowerCase().endsWith(".bks") ? lastRunTarget : undefined);
+  const workspaceRoot = lastRunWorkspace || resolveWorkspaceRoot(firstWorkspaceFolder());
+
+  if (!sourceFile || !workspaceRoot) {
+    vscode.window.showErrorMessage("Open or run a .bks file before opening generated artifacts.");
+    return;
+  }
+
+  const baseName = generatedBaseName(sourceFile);
+  const artifactPath = artifactPathFor(kind, workspaceRoot, baseName);
+  if (!artifactPath || !fs.existsSync(artifactPath)) {
+    vscode.window.showWarningMessage(`BickSpec artifact not found: ${artifactPath || kind}`);
+    return;
+  }
+
+  const uri = vscode.Uri.file(artifactPath);
+  if (kind === "tree") {
+    await vscode.commands.executeCommand("vscode.open", uri);
+    return;
+  }
+  const document = await vscode.workspace.openTextDocument(uri);
+  await vscode.window.showTextDocument(document);
+}
+
+function artifactPathFor(kind, workspaceRoot, baseName) {
+  if (kind === "java") {
+    return path.join(workspaceRoot, "output", "java", `${baseName}_Generated.java`);
+  }
+  if (kind === "symbols") {
+    return path.join(workspaceRoot, "output", "symbols", `${baseName}_symbols.csv`);
+  }
+  if (kind === "tree") {
+    return path.join(workspaceRoot, "output", "trees", `${baseName}_ParseTree.svg`);
+  }
+  return undefined;
+}
+
+function generatedBaseName(sourceFile) {
+  const stem = path.basename(sourceFile, path.extname(sourceFile));
+  const sanitized = stem.replace(/[^A-Za-z0-9_]/g, "_");
+  return sanitized || "BickSpecProgram";
+}
+
+function resolveCompilerPath(displayPath, cwd) {
+  const normalized = displayPath.replace(/\//g, path.sep);
+  return path.isAbsolute(normalized) ? normalized : path.resolve(cwd, normalized);
+}
+
+function activeBksFile() {
+  const editor = vscode.window.activeTextEditor;
+  if (!editor || editor.document.uri.scheme !== "file") {
+    return undefined;
+  }
+  return editor.document.fileName.toLowerCase().endsWith(".bks") ? editor.document.fileName : undefined;
+}
+
+function firstWorkspaceFolder() {
+  return vscode.workspace.workspaceFolders && vscode.workspace.workspaceFolders.length > 0
+    ? vscode.workspace.workspaceFolders[0]
+    : undefined;
+}
+
+function resolveWorkspaceRoot(workspaceFolder) {
+  if (!workspaceFolder) {
+    return contextExtensionParent();
+  }
+
+  const root = workspaceFolder.uri.fsPath;
+  if (path.basename(root) === "vscode-extension" && fs.existsSync(path.join(path.dirname(root), "app"))) {
+    return path.dirname(root);
+  }
+  return root;
+}
+
+function contextExtensionParent() {
+  return path.resolve(__dirname, "..");
+}
+
+module.exports = {
+  activate,
+  deactivate
+};
