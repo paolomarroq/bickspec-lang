@@ -11,6 +11,21 @@ import org.antlr.v4.runtime.Token;
 import org.antlr.v4.runtime.misc.Interval;
 import org.antlr.v4.runtime.tree.TerminalNode;
 
+/**
+ * Phase II semantic visitor used to demonstrate tree traversal and planned
+ * semantic actions.
+ *
+ * <p>The visitor receives the ANTLR parse tree after lexical and syntax
+ * validation have succeeded. It walks relevant grammar nodes and records a
+ * deterministic trace of visits and actions, such as project entry, imports,
+ * assignments, display/read statements, control flow, functions, money
+ * literals, and time literals.</p>
+ *
+ * <p>Output is a list of trace strings consumed by {@link ParseRunner} and
+ * {@link TranspileRunner}. The visitor intentionally does not enforce a full
+ * symbol table, type system, unit compatibility, or financial semantics yet;
+ * those are Phase III responsibilities.</p>
+ */
 public final class BickSpecSemanticVisitor extends BickSpecBaseVisitor<Void> {
     private static final Set<String> BUILTIN_FUNCTIONS = Set.of("NPV", "PAYBACK");
 

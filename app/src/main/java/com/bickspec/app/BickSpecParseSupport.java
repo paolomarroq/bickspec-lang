@@ -17,6 +17,21 @@ import org.antlr.v4.runtime.RecognitionException;
 import org.antlr.v4.runtime.Recognizer;
 import org.antlr.v4.runtime.tree.ParseTree;
 
+/**
+ * Shared Phase II parsing infrastructure used by both parser and transpiler
+ * runners.
+ *
+ * <p>The class centralizes directory/file resolution, UTF-8 source reading,
+ * ANTLR lexer/parser construction, custom error collection, parse tree
+ * extraction, and semantic trace collection. This keeps {@link ParseRunner} and
+ * {@link TranspileRunner} focused on presentation and artifact generation.</p>
+ *
+ * <p>Input: one BickSpec source path or directory. Output: a {@link ParseResult}
+ * that either contains the parse tree, parser instance, printable tree, and
+ * semantic trace, or contains the first lexical/syntax/IO failure. Phase II does
+ * not build a full symbol table or perform deep type/unit validation here; those
+ * checks belong to later semantic phases.</p>
+ */
 public final class BickSpecParseSupport {
     private BickSpecParseSupport() {
     }
@@ -124,6 +139,13 @@ public final class BickSpecParseSupport {
         return displayPath.toString().replace('\\', '/');
     }
 
+    /**
+     * Immutable carrier for the result of parsing one input file.
+     *
+     * <p>Successful results feed the semantic trace, graph generator, and Java
+     * translator. Failed results are printed by the runners and deliberately do
+     * not expose a parse tree for later phases.</p>
+     */
     public record ParseResult(
             boolean success,
             ParseTree tree,
@@ -145,6 +167,10 @@ public final class BickSpecParseSupport {
         }
     }
 
+    /**
+     * Minimal ANTLR error listener that records human-readable lexical or syntax
+     * errors without letting ANTLR print directly to stderr.
+     */
     private static final class SyntaxErrorCollector extends BaseErrorListener {
         private final String code;
         private final List<String> messages = new ArrayList<>();

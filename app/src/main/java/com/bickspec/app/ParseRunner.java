@@ -4,6 +4,21 @@ import java.io.IOException;
 import java.nio.file.Path;
 import java.util.List;
 
+/**
+ * Phase II command-line entry point for parser validation and trace reporting.
+ *
+ * <p>The runner accepts one {@code .bks} file or a directory, delegates lexical
+ * and syntactic validation to {@link BickSpecParseSupport}, and only continues
+ * with Phase II outputs when parsing succeeds. For each valid file it prints the
+ * ANTLR parse tree, prints the semantic visit trace, and asks
+ * {@link ParseTreeGraphGenerator} to write DOT/SVG parse tree visualizations.</p>
+ *
+ * <p>Input: BickSpec source files. Output: console validation results, semantic
+ * trace lines, and parse tree graph files under {@code testing/trees/}. Invalid
+ * files preserve the current failure behavior and do not produce graph files.
+ * Complete semantic validation and runtime behavior are intentionally left for
+ * Phase III.</p>
+ */
 public final class ParseRunner {
     private ParseRunner() {
     }
@@ -25,6 +40,8 @@ public final class ParseRunner {
                 System.out.println("[STATUS] PARSE OK");
                 if (result.semanticResult().success()) {
                     System.out.println("[STATUS] SEMANTIC OK");
+                    System.out.println("Semantic visit trace:");
+                    result.semanticResult().trace().forEach(System.out::println);
                     Path symbolsFile = exportSymbols(file, result.semanticResult().symbolTable());
                     System.out.printf("[SYMBOLS] %s%n", BickSpecParseSupport.formatPathForDisplay(symbolsFile));
                     ParseTreeGraphGenerator.GraphResult graphResult = ParseTreeGraphGenerator.generate(file, result);

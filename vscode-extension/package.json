@@ -1,0 +1,50 @@
+{
+  "name": "bickspec-language-support",
+  "displayName": "BickSpec Language Support",
+  "description": "Language support for BickSpec, a finance and economic engineering DSL.",
+  "version": "0.1.0",
+  "publisher": "bickspec",
+  "license": "MIT",
+  "engines": {
+    "vscode": "^1.90.0"
+  },
+  "categories": [
+    "Programming Languages",
+    "Snippets"
+  ],
+  "keywords": [
+    "bickspec",
+    "dsl",
+    "finance",
+    "economic engineering",
+    "antlr"
+  ],
+  "contributes": {
+    "languages": [
+      {
+        "id": "bickspec",
+        "aliases": [
+          "BickSpec",
+          "bickspec"
+        ],
+        "extensions": [
+          ".bks"
+        ],
+        "configuration": "./language-configuration.json"
+      }
+    ],
+    "grammars": [
+      {
+        "language": "bickspec",
+        "scopeName": "source.bickspec",
+        "path": "./syntaxes/bickspec.tmLanguage.json"
+      }
+    ],
+    "snippets": [
+      {
+        "language": "bickspec",
+        "path": "./snippets/bickspec.code-snippets"
+      }
+    ]
+  }
+}

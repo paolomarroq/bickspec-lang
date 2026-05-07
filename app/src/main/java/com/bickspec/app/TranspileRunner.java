@@ -8,6 +8,20 @@ import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
 
+/**
+ * Phase II command-line entry point for the initial Java translation path.
+ *
+ * <p>This runner uses the same parsing pipeline as {@link ParseRunner}. For each
+ * valid {@code .bks} file it prints parser/semantic information, exports the
+ * parse tree graph, and then delegates to {@link BickSpecJavaTranslatorVisitor}
+ * to emit a readable Java file under {@code testing/generated/}.</p>
+ *
+ * <p>Input: valid BickSpec source files. Output: generated Java source plus the
+ * same diagnostic artifacts produced by {@code ParseRunner}. The generated Java
+ * is a syntax-directed classroom artifact: it preserves structure and marks
+ * domain behavior such as currency, time, and financial built-ins as TODOs for
+ * Phase III rather than implementing a complete runtime.</p>
+ */
 public final class TranspileRunner {
     private static final Path GENERATED_DIRECTORY = Path.of("output", "java");
     private static final Path CLASS_DIRECTORY = Path.of("output", "classes");
@@ -336,6 +350,10 @@ public final class TranspileRunner {
         }
     }
 
+    /**
+     * Produces a deterministic Java class name from the source filename while
+     * keeping it valid for the Java language.
+     */
     private static String generatedClassName(Path sourceFile) {
         String filename = sourceFile.getFileName().toString();
         String stem = filename.endsWith(".bks") ? filename.substring(0, filename.length() - 4) : filename;

@@ -12,6 +12,19 @@ import java.util.stream.Stream;
 import org.antlr.v4.runtime.CharStreams;
 import org.antlr.v4.runtime.Token;
 
+/**
+ * Phase I command-line entry point for lexical analysis.
+ *
+ * <p>The runner accepts one {@code .bks} file or a directory of {@code .bks}
+ * files, feeds each source file to the ANTLR-generated {@link BickSpecLexer},
+ * and prints the token stream in a deterministic text format. It remains the
+ * default jar entry point for Phase I compatibility while Phase II tools are
+ * invoked by class name.</p>
+ *
+ * <p>Input: BickSpec source files encoded as UTF-8. Output: token names and
+ * lexemes on the console. Full parser validation, semantic tracing, and Java
+ * generation are handled by the Phase II runners, not by this class.</p>
+ */
 public final class LexerRunner {
     private LexerRunner() {
     }

@@ -11,6 +11,19 @@ import org.antlr.v4.runtime.Parser;
 import org.antlr.v4.runtime.tree.ParseTree;
 import org.antlr.v4.runtime.tree.TerminalNode;
 
+/**
+ * Phase II parse tree visualization helper.
+ *
+ * <p>The generator receives the successful parse result for one source file and
+ * serializes its ANTLR parse tree as Graphviz DOT under {@code testing/trees/}.
+ * After the DOT file is written, it invokes the external {@code dot} command to
+ * render an SVG visualization with the same deterministic base filename.</p>
+ *
+ * <p>Input: a source path and successful {@link BickSpecParseSupport.ParseResult}.
+ * Output: {@code *_ParseTree.dot} and, when Graphviz is available, {@code
+ * *_ParseTree.svg}. SVG failures are reported as warnings without changing the
+ * parse result; invalid programs never call this generator.</p>
+ */
 public final class ParseTreeGraphGenerator {
     private static final Path TREE_DIRECTORY = Path.of("output", "trees");
 
@@ -78,6 +91,10 @@ public final class ParseTreeGraphGenerator {
         }
     }
 
+    /**
+     * Display-ready paths or warning text for graph artifacts created from one
+     * valid source file.
+     */
     public record GraphResult(Path dotFile, Path svgFile, String svgMessage) {
         public List<String> displayLines() {
             List<String> lines = new ArrayList<>();
@@ -91,6 +108,10 @@ public final class ParseTreeGraphGenerator {
         }
     }
 
+    /**
+     * Small DOT writer that assigns deterministic node identifiers while
+     * preserving ANTLR rule names and terminal text in graph labels.
+     */
     private static final class DotWriter {
         private final Parser parser;
         private final StringBuilder nodes = new StringBuilder();

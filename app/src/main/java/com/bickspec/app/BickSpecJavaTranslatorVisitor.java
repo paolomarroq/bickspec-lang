@@ -12,6 +12,21 @@ import org.antlr.v4.runtime.ParserRuleContext;
 import org.antlr.v4.runtime.tree.ParseTree;
 import org.antlr.v4.runtime.tree.TerminalNode;
 
+/**
+ * Phase II syntax-directed translator from the BickSpec parse tree to Java.
+ *
+ * <p>The visitor receives a validated {@link BickSpecParser.ProgramContext} from
+ * {@link TranspileRunner}. It walks declarations, statements, expressions, and
+ * selected domain literals to emit a readable Java class that mirrors the source
+ * program structure.</p>
+ *
+ * <p>Output is Java source text written under {@code testing/generated/}. This
+ * translator is intentionally conservative: it preserves currency/time metadata
+ * as comments or helper calls, creates TODO stubs for incomplete built-ins, and
+ * does not claim to implement the full BickSpec runtime. Full symbol-table
+ * driven checks, advanced semantic validation, and production-quality target
+ * code generation remain Phase III work.</p>
+ */
 public final class BickSpecJavaTranslatorVisitor extends BickSpecBaseVisitor<Void> {
     private final String className;
     private final String sourceDisplayPath;
@@ -31,6 +46,10 @@ public final class BickSpecJavaTranslatorVisitor extends BickSpecBaseVisitor<Voi
         this.sourceDisplayPath = sourceDisplayPath;
     }
 
+    /**
+     * Translates the complete validated program tree into a Java source file
+     * body.
+     */
     public String translate(BickSpecParser.ProgramContext context) {
         visit(context);
         return renderJavaSource();

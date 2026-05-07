@@ -1,0 +1,59 @@
+{
+  "Project block": {
+    "prefix": "project",
+    "body": [
+      "PROJECT \"${1:Project Name}\" {",
+      "  ${0:DISPLAY \"Hello BickSpec\"}",
+      "}"
+    ],
+    "description": "Create a BickSpec PROJECT block."
+  },
+  "If then else": {
+    "prefix": "if",
+    "body": [
+      "IF ${1:condition} THEN",
+      "  ${2:DISPLAY \"accepted\"}",
+      "ELSE",
+      "  ${3:DISPLAY \"rejected\"}",
+      "END"
+    ],
+    "description": "Create an IF / THEN / ELSE / END statement."
+  },
+  "While loop": {
+    "prefix": "while",
+    "body": [
+      "WHILE ${1:condition} DO",
+      "  ${0:DISPLAY \"loop\"}",
+      "END"
+    ],
+    "description": "Create a WHILE / DO / END loop."
+  },
+  "Function": {
+    "prefix": "function",
+    "body": [
+      "FUNCTION ${1:name}(${2:arg}) = ${3:arg}"
+    ],
+    "description": "Create a BickSpec expression function."
+  },
+  "FX declaration": {
+    "prefix": "fx",
+    "body": [
+      "FX ${1|GTQ,EUR,USD|} := ${2:7.80}"
+    ],
+    "description": "Declare an exchange rate."
+  },
+  "Display": {
+    "prefix": "display",
+    "body": [
+      "DISPLAY ${1:\"message\"}"
+    ],
+    "description": "Write output to the console."
+  },
+  "Read": {
+    "prefix": "read",
+    "body": [
+      "READ ${1:VALUE}"
+    ],
+    "description": "Read a numeric value from the terminal."
+  }
+}

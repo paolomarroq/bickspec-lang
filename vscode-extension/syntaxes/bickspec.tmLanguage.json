@@ -1,0 +1,148 @@
+{
+  "$schema": "https://raw.githubusercontent.com/martinring/tmlanguage/master/tmlanguage.json",
+  "name": "BickSpec",
+  "scopeName": "source.bickspec",
+  "patterns": [
+    {
+      "include": "#comments"
+    },
+    {
+      "include": "#strings"
+    },
+    {
+      "include": "#keywords"
+    },
+    {
+      "include": "#conversions"
+    },
+    {
+      "include": "#currencies"
+    },
+    {
+      "include": "#timeUnits"
+    },
+    {
+      "include": "#numbers"
+    },
+    {
+      "include": "#operators"
+    },
+    {
+      "include": "#identifiers"
+    }
+  ],
+  "repository": {
+    "comments": {
+      "patterns": [
+        {
+          "name": "comment.line.number-sign.bickspec",
+          "match": "#.*$"
+        },
+        {
+          "name": "comment.block.bickspec",
+          "begin": "/\\*",
+          "end": "\\*/"
+        }
+      ]
+    },
+    "strings": {
+      "patterns": [
+        {
+          "name": "string.quoted.double.bickspec",
+          "begin": "\"",
+          "end": "\"",
+          "patterns": [
+            {
+              "name": "constant.character.escape.bickspec",
+              "match": "\\\\."
+            }
+          ]
+        }
+      ]
+    },
+    "keywords": {
+      "patterns": [
+        {
+          "name": "keyword.control.bickspec",
+          "match": "\\b(?:IF|THEN|ELSE|WHILE|DO|REPEAT|TIMES|END)\\b"
+        },
+        {
+          "name": "keyword.declaration.bickspec",
+          "match": "\\b(?:PROJECT|IMPORT|FX|FUNCTION)\\b"
+        },
+        {
+          "name": "keyword.other.io.bickspec",
+          "match": "\\b(?:READ|DISPLAY|WRITE)\\b"
+        }
+      ]
+    },
+    "conversions": {
+      "patterns": [
+        {
+          "name": "keyword.operator.conversion.bickspec",
+          "match": "\\b(?:to|in)\\b"
+        }
+      ]
+    },
+    "currencies": {
+      "patterns": [
+        {
+          "name": "constant.language.currency.bickspec",
+          "match": "\\b(?:USD|GTQ|EUR)\\b"
+        }
+      ]
+    },
+    "timeUnits": {
+      "patterns": [
+        {
+          "name": "constant.language.time-unit.bickspec",
+          "match": "\\b(?:year|month|quarter|week|day)\\b"
+        }
+      ]
+    },
+    "numbers": {
+      "patterns": [
+        {
+          "name": "constant.numeric.float.bickspec",
+          "match": "\\b\\d+\\.\\d+\\b"
+        },
+        {
+          "name": "constant.numeric.integer.bickspec",
+          "match": "\\b\\d+\\b"
+        }
+      ]
+    },
+    "operators": {
+      "patterns": [
+        {
+          "name": "keyword.operator.assignment.bickspec",
+          "match": ":=|="
+        },
+        {
+          "name": "keyword.operator.comparison.bickspec",
+          "match": ">=|<=|==|!=|>|<"
+        },
+        {
+          "name": "keyword.operator.logical.bickspec",
+          "match": "&&|\\|\\||!"
+        },
+        {
+          "name": "keyword.operator.arithmetic.bickspec",
+          "match": "\\+|-|\\*|/"
+        }
+      ]
+    },
+    "identifiers": {
+      "patterns": [
+        {
+          "name": "entity.name.function.bickspec",
+          "match": "\\b[A-Za-z_][A-Za-z0-9_]*(?=\\s*\\()"
+        },
+        {
+          "name": "variable.other.identifier.bickspec",
+          "match": "\\b[A-Za-z_][A-Za-z0-9_]*\\b"
+        }
+      ]
+    }
+  }
+}
