@@ -5,22 +5,25 @@ import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.ArrayList;
 import java.util.List;
 
 public final class TranspileRunner {
     private static final Path GENERATED_DIRECTORY = Path.of("testing", "generated");
+    private static final Path SUMMARY_REPORT = Path.of("testing", "outputs", "phase3_generation_summary.csv");
 
     private TranspileRunner() {
     }
 
     public static void main(String[] args) {
         if (args.length != 1) {
-            System.err.println("Usage: java -cp app/target/bickspec-lexer-runner-1.0.0.jar com.bickspec.app.TranspileRunner <path-to-file-or-directory>");
+            System.err.println("Usage: java -jar app/target/bickspec-lexer-runner-1.0.0.jar <path-to-file-or-directory>");
             System.exit(1);
         }
 
         Path inputPath = Path.of(args[0]);
         List<Path> files = BickSpecParseSupport.resolveInputFiles(inputPath);
+        List<SummaryRow> summaryRows = new ArrayList<>();
         boolean hasFailure = false;
 
         for (Path file : files) {
@@ -41,20 +44,29 @@ public final class TranspileRunner {
                     Path generatedFile = transpile(file, result);
                     System.out.printf("[JAVA] %s%n", BickSpecParseSupport.formatPathForDisplay(generatedFile));
                     System.out.println("[ACTION] Java generation completed successfully");
+                    summaryRows.add(SummaryRow.generated(file, symbolsFile, graphResult.svgFile(), generatedFile));
                 } else {
                     hasFailure = true;
+                    deleteGeneratedJavaIfPresent(file);
                     System.out.println("[STATUS] SEMANTIC FAILED");
                     result.semanticResult().diagnostics().forEach(diagnostic -> System.out.println(diagnostic.formatted()));
                     System.out.println("[SYMBOLS] not generated");
                     System.out.println("[JAVA] not generated");
+                    summaryRows.add(SummaryRow.failed(file, "OK", "FAILED", "not generated", "not generated", "not generated"));
                 }
             } else {
                 hasFailure = true;
+                deleteGeneratedJavaIfPresent(file);
                 System.out.println("[STATUS] PARSE FAILED");
                 System.out.println(result.diagnostic().formatted());
                 System.out.println("[SYMBOLS] not generated");
                 System.out.println("[JAVA] not generated");
+                summaryRows.add(SummaryRow.failed(file, "FAILED", "not run", "not generated", "not generated", "not generated"));
             }
+        }
+
+        if (Files.isDirectory(inputPath)) {
+            writeSummaryReport(summaryRows);
         }
 
         if (hasFailure) {
@@ -100,6 +112,38 @@ public final class TranspileRunner {
         }
     }
 
+    private static void deleteGeneratedJavaIfPresent(Path sourceFile) {
+        try {
+            Files.deleteIfExists(GENERATED_DIRECTORY.resolve(generatedClassName(sourceFile) + ".java"));
+        } catch (IOException exception) {
+            System.err.println(new CompilerDiagnostic(
+                    CompilerDiagnostic.Severity.WARNING,
+                    "GEN05",
+                    "Failed to remove stale generated Java file: " + exception.getMessage(),
+                    -1,
+                    -1).formatted());
+        }
+    }
+
+    private static void writeSummaryReport(List<SummaryRow> summaryRows) {
+        try {
+            Files.createDirectories(SUMMARY_REPORT.getParent());
+            StringBuilder csv = new StringBuilder("file,parse_status,semantic_status,symbols,tree,java\n");
+            for (SummaryRow row : summaryRows) {
+                csv.append(row.toCsv()).append("\n");
+            }
+            Files.writeString(SUMMARY_REPORT, csv.toString(), StandardCharsets.UTF_8);
+            System.out.printf("[SUMMARY] %s%n", BickSpecParseSupport.formatPathForDisplay(SUMMARY_REPORT));
+        } catch (IOException exception) {
+            System.err.println(new CompilerDiagnostic(
+                    CompilerDiagnostic.Severity.ERROR,
+                    "GEN04",
+                    "Failed to write generation summary report: " + exception.getMessage(),
+                    -1,
+                    -1).formatted());
+        }
+    }
+
     private static String generatedClassName(Path sourceFile) {
         String filename = sourceFile.getFileName().toString();
         String stem = filename.endsWith(".bks") ? filename.substring(0, filename.length() - 4) : filename;
@@ -111,5 +155,57 @@ public final class TranspileRunner {
             sanitized = "BickSpec_" + sanitized;
         }
         return sanitized + "_Generated";
+    }
+
+    private record SummaryRow(
+            String file,
+            String parseStatus,
+            String semanticStatus,
+            String symbols,
+            String tree,
+            String java) {
+        static SummaryRow generated(Path file, Path symbols, Path tree, Path java) {
+            return new SummaryRow(
+                    BickSpecParseSupport.formatPathForDisplay(file),
+                    "OK",
+                    "OK",
+                    BickSpecParseSupport.formatPathForDisplay(symbols),
+                    tree == null ? "not generated" : BickSpecParseSupport.formatPathForDisplay(tree),
+                    BickSpecParseSupport.formatPathForDisplay(java));
+        }
+
+        static SummaryRow failed(
+                Path file,
+                String parseStatus,
+                String semanticStatus,
+                String symbols,
+                String tree,
+                String java) {
+            return new SummaryRow(
+                    BickSpecParseSupport.formatPathForDisplay(file),
+                    parseStatus,
+                    semanticStatus,
+                    symbols,
+                    tree,
+                    java);
+        }
+
+        String toCsv() {
+            return csv(file) + ","
+                    + csv(parseStatus) + ","
+                    + csv(semanticStatus) + ","
+                    + csv(symbols) + ","
+                    + csv(tree) + ","
+                    + csv(java);
+        }
+
+        private static String csv(String value) {
+            if (value == null) {
+                return "";
+            }
+            boolean quoted = value.contains(",") || value.contains("\"") || value.contains("\n") || value.contains("\r");
+            String escaped = value.replace("\"", "\"\"");
+            return quoted ? "\"" + escaped + "\"" : escaped;
+        }
     }
 }

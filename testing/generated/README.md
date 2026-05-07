@@ -1,3 +1,3 @@
-Generated Java files are written here by `com.bickspec.app.TranspileRunner`.
+Generated Java files are written here by the executable BickSpec compiler jar.
 
-Files matching `*_Generated.java` are build/demo artifacts and are ignored by Git.
+Files matching `*_Generated.java` are compiler output artifacts and are ignored by Git.

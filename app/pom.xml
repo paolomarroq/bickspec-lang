@@ -66,7 +66,7 @@
                             <createDependencyReducedPom>false</createDependencyReducedPom>
                             <transformers>
                                 <transformer implementation="org.apache.maven.plugins.shade.resource.ManifestResourceTransformer">
-                                    <mainClass>com.bickspec.app.LexerRunner</mainClass>
+                                    <mainClass>com.bickspec.app.TranspileRunner</mainClass>
                                 </transformer>
                             </transformers>
                         </configuration>

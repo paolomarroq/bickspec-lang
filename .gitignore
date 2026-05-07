@@ -1,5 +1,6 @@
 app/target/
 testing/outputs/*.txt
+testing/outputs/*.csv
 testing/generated/*_Generated.java
 testing/generated/*_Generated.class
 testing/symbols/*_symbols.csv

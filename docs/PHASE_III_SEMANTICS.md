@@ -1,6 +1,12 @@
-# Phase III Semantic Analysis
+# Compiler Finalization Notes
 
 Phase III adds a real semantic-analysis foundation after ANTLR parsing and before Java generation.
+
+The final compiler entry point is the packaged jar:
+
+`java -jar app/target/bickspec-lexer-runner-1.0.0.jar <path-to-file-or-directory>`
+
+The repository stops at automatic Java source generation. Generated files under `testing/generated/` can be compiled and tested manually after the compiler run.
 
 ## Compiler gates
 
@@ -34,6 +40,8 @@ Official built-ins are emitted as real Java helpers:
 Imports such as `IMPORT finance` are represented as generated Java runtime module markers. Multi-file linking is intentionally kept lightweight for this phase; imported built-ins used by the official fixtures are available through generated helper methods.
 
 Batch assignments expand to explicit Java assignments. Shared money and time metadata is preserved across every expanded target.
+
+Generated Java headers are final-product neutral. They include the auto-generated marker, source path, runtime notes, and built-in documentation, but they do not include phase labels.
 
 ## Diagnostic codes
 

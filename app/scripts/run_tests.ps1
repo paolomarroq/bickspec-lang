@@ -2,7 +2,7 @@ param(
     [string]$JarPath = "app/target/bickspec-lexer-runner-1.0.0.jar",
     [string]$InputPath = "testing",
     [switch]$SaveOutput,
-    [string]$OutputPath = "testing/outputs/phase3_parse_results.txt"
+    [string]$OutputPath = "testing/outputs/phase3_generation_results.txt"
 )
 
 $repoRoot = Resolve-Path (Join-Path $PSScriptRoot "..\..")
@@ -24,9 +24,9 @@ if ($SaveOutput) {
     $outputDirectory = Split-Path -Parent $outputFullPath
     New-Item -ItemType Directory -Path $outputDirectory -Force | Out-Null
 
-    & java -cp $jarFullPath com.bickspec.app.ParseRunner $inputFullPath | Tee-Object -FilePath $outputFullPath
+    & java -jar $jarFullPath $inputFullPath | Tee-Object -FilePath $outputFullPath
     exit $LASTEXITCODE
 }
 
-& java -cp $jarFullPath com.bickspec.app.ParseRunner $inputFullPath
+& java -jar $jarFullPath $inputFullPath
 exit $LASTEXITCODE

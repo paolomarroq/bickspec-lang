@@ -1,6 +1,38 @@
 # bickspec-lang
 BickSpec is a finance-oriented structured programming language designed for economic engineering modeling, built with Java and ANTLR4 as part of a Compiler Design project.
 
+## Final compiler scope
+
+The repository currently delivers the mandatory compiler/transpiler core:
+
+- Accept one `.bks` source file or a directory of `.bks` files.
+- Run lexical, syntax, and semantic validation.
+- Export a semantic symbol table CSV for valid programs.
+- Export parse tree DOT/SVG artifacts for valid programs.
+- Automatically generate coherent Java source under `testing/generated/`.
+- Block Java generation when lexical, syntax, or semantic errors are found.
+
+This state intentionally stops at automatic `.java` generation. Generated Java files are ready to compile and test manually, but this commit does not add automatic `javac` or `java` execution. An installer and optional IDE/editor/plugin work are outside the mandatory core scope.
+
+## Architecture
+
+The compiler pipeline is:
+
+1. ANTLR lexer from `docs/BickSpec.g4`
+2. ANTLR parser validation
+3. Semantic visitor and symbol table
+4. Symbol CSV export to `testing/symbols/`
+5. Parse tree DOT/SVG export to `testing/trees/`
+6. Java generation to `testing/generated/`
+
+Main Java components:
+
+- `LexerRunner`: token inspection compatibility tool.
+- `ParseRunner`: parse/semantic validation plus symbol and tree exports.
+- `TranspileRunner`: final compiler entry point for Java generation.
+- `BickSpecSemanticVisitor`: semantic checks and symbol registration.
+- `BickSpecJavaTranslatorVisitor`: Java source generation and runtime helpers.
+
 ## Phase I scope
 
 Phase I implements **lexical analysis only**.
@@ -51,9 +83,17 @@ This commit adds:
 
 The generated Java is a classroom/demo translation. It reflects the source program structure and includes TODO comments for BickSpec-specific runtime behavior such as currency conversion, time conversion, partial import mapping, and financial built-ins.
 
-## Build in IntelliJ (no `mvn` required)
+## Build executable compiler jar
 
-1. Open the project in IntelliJ IDEA.
+From a terminal:
+
+```bash
+mvn -f app/pom.xml package
+```
+
+Or in IntelliJ IDEA:
+
+1. Open the project.
 2. Open **Maven Tool Window**.
 3. Under `app` -> **Lifecycle**, run `package`.
 
@@ -61,14 +101,65 @@ Example jar produced:
 
 `app/target/bickspec-lexer-runner-1.0.0.jar`
 
-The jar keeps `LexerRunner` as its default main class for Phase I compatibility. Phase II tools are invoked by class name with `java -cp`.
+The jar is the executable compiler entry point and runs `TranspileRunner` by default.
 
 Use UTF-8 for `.bks` source files, generated `.java` files, and IDE/project encoding settings. The runners read `.bks` files as UTF-8, and `TranspileRunner` writes generated `.java` files as UTF-8. On Windows consoles, run `chcp 65001` when you need UTF-8 console output.
+
+## Run the compiler on one file
+
+```bash
+java -jar app/target/bickspec-lexer-runner-1.0.0.jar testing/P6_Imports_NPV.bks
+```
+
+PowerShell wrapper:
+
+```powershell
+.\app\scripts\compile.ps1 -InputPath testing\P6_Imports_NPV.bks
+```
+
+## Run the compiler on the full test suite
+
+```bash
+java -jar app/target/bickspec-lexer-runner-1.0.0.jar testing
+```
+
+PowerShell wrapper:
+
+```powershell
+.\app\scripts\compile.ps1 -InputPath testing
+```
+
+Expected successful file output:
+
+```text
+==== testing/P6_Imports_NPV.bks ====
+[STATUS] PARSE OK
+[STATUS] SEMANTIC OK
+[SYMBOLS] testing/symbols/P6_Imports_NPV_symbols.csv
+[TREE] testing/trees/P6_Imports_NPV_ParseTree.svg
+[JAVA] testing/generated/P6_Imports_NPV_Generated.java
+[ACTION] Java generation completed successfully
+```
+
+Expected failing file output:
+
+```text
+==== testing/P11_FalloSemantico.bks ====
+[STATUS] PARSE OK
+[STATUS] SEMANTIC FAILED
+[ERROR] SEM01 - Variable 'X' used before declaration at line 2:11
+[SYMBOLS] not generated
+[JAVA] not generated
+```
+
+Directory runs also write a summary report:
+
+`testing/outputs/phase3_generation_summary.csv`
 
 ## Run lexer on one test file
 
 ```bash
-java -jar app/target/bickspec-lexer-runner-1.0.0.jar testing/P1_HolaMundo.bks
+java -cp app/target/bickspec-lexer-runner-1.0.0.jar com.bickspec.app.LexerRunner testing/P1_HolaMundo.bks
 ```
 
 ## Run lexer on all tests (directory mode)
@@ -121,7 +212,7 @@ dot -V
 ## Generate Java from one test file
 
 ```bash
-java -cp app/target/bickspec-lexer-runner-1.0.0.jar com.bickspec.app.TranspileRunner testing/P1_HolaMundo.bks
+java -jar app/target/bickspec-lexer-runner-1.0.0.jar testing/P1_HolaMundo.bks
 ```
 
 For valid files, `TranspileRunner` prints parse status, semantic status, symbol CSV path, parse tree graph path, generated Java path, and a completion action.
@@ -133,7 +224,7 @@ Example generated file:
 ## Generate Java from all tests
 
 ```bash
-java -cp app/target/bickspec-lexer-runner-1.0.0.jar com.bickspec.app.TranspileRunner testing
+java -cp app/target/bickspec-lexer-runner-1.0.0.jar com.bickspec.app.LexerRunner testing
 ```
 
 Valid files generate Java under `testing/generated/`. Invalid files report lexical, syntax, or semantic failures and do not generate Java.
@@ -216,6 +307,21 @@ Phase III adds the required cases as new tests instead of renumbering older file
 - `P11_FalloSemantico.bks`: semantic-negative test.
 - `P12_Recursividad.bks`: recursion/function lookup test.
 
+## Final test suite organization
+
+- `P1_HolaMundo.bks`: basic project and display.
+- `P2_Aritmetica.bks`: variables, assignment, arithmetic.
+- `P3_Input_If.bks`: input, FX, conversion, and `IF`/`ELSE`.
+- `P4_Funcion.bks`: user function declaration and call.
+- `P5_While_Runway.bks`: `WHILE` and time metadata.
+- `P6_Imports_NPV.bks`: imports, FX, money conversion, and `NPV`.
+- `P7_BatchMoney.bks`: batch money assignment.
+- `P8_BatchTime.bks`: batch time assignment.
+- `P9_FalloLexico.bks`: lexical failure coverage.
+- `P10_FalloSintaxis.bks`: syntax failure coverage.
+- `P11_FalloSemantico.bks`: semantic failure coverage.
+- `P12_Recursividad.bks`: recursion coverage.
+
 ## Phase III Commit 2/3 scope
 
 Phase III Commit 2/3 completes the Java generation layer while preserving the semantic gate from Commit 1/3.
@@ -271,6 +377,10 @@ Run and also save output:
 .\app\scripts\run_tests.ps1 -SaveOutput
 ```
 
-Default output file:
+Default console-output file:
 
-`testing/outputs/phase3_parse_results.txt`
+`testing/outputs/phase3_generation_results.txt`
+
+The compiler also writes:
+
+`testing/outputs/phase3_generation_summary.csv`
