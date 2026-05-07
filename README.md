@@ -21,8 +21,8 @@ This commit adds:
 - `com.bickspec.app.ParseRunner` for validating one `.bks` file or every `.bks` file in a directory.
 - Clear lexical and syntax error reporting through custom ANTLR error listeners.
 - Negative parser tests:
-  - `testing/P7_FalloLexico.bks`
-  - `testing/P8_FalloSintaxis.bks`
+  - `testing/P9_FalloLexico.bks`
+  - `testing/P10_FalloSintaxis.bks`
 
 Java translation is intentionally not included yet.
 
@@ -87,7 +87,7 @@ When a directory is provided, the runner processes all `*.bks` files in filename
 java -cp app/target/bickspec-lexer-runner-1.0.0.jar com.bickspec.app.ParseRunner testing/P1_HolaMundo.bks
 ```
 
-Expected output includes a file header, `PARSE OK`, the ANTLR parse tree, and a `Semantic visit trace:` section.
+Expected output includes a file header, `[STATUS] PARSE OK`, `[STATUS] SEMANTIC OK`, a symbol CSV path, and a parse tree graph path.
 
 For valid files, `ParseRunner` also writes graphical parse tree files under `testing/trees/`.
 
@@ -97,7 +97,7 @@ For valid files, `ParseRunner` also writes graphical parse tree files under `tes
 java -cp app/target/bickspec-lexer-runner-1.0.0.jar com.bickspec.app.ParseRunner testing
 ```
 
-When a directory is provided, the parser runner processes all `*.bks` files in ascending filename order. `P1` through `P6` are expected to parse successfully, `P7_FalloLexico.bks` is expected to fail lexically, and `P8_FalloSintaxis.bks` is expected to fail syntactically.
+When a directory is provided, the parser runner processes all `*.bks` files in ascending test-number order. `P1` through `P8` and `P12` are expected to pass parse and semantic validation, `P9_FalloLexico.bks` is expected to fail lexically, `P10_FalloSintaxis.bks` is expected to fail syntactically, and `P11_FalloSemantico.bks` is expected to fail semantically.
 
 ## Graphical parse trees
 
@@ -150,6 +150,66 @@ Input prompts are centralized through `readNumber`, so a BickSpec prompt followe
 
 Dimensional metadata is preserved as quoted text comments or conversion arguments, for example `double CAPEX = 500000; // "GTQ"` and `convert(MESES, "month")`. Generated TODO comments mark runtime behavior that remains pending.
 
+## Phase III Commit 1/3 scope
+
+Phase III adds the real semantic-analysis foundation required before Java generation:
+
+- A symbol table for identifiers, declared type, scope, declaration line, initialization state, and notes.
+- Semantic checks for undeclared variables, duplicate declarations in the same scope, simple type mismatches, and undeclared function calls.
+- Standard compiler diagnostic codes for lexical, syntax, semantic, and generation errors.
+- Symbol-table CSV export under `testing/symbols/`.
+- A semantic gate that blocks both symbol CSV export and Java generation when validation fails.
+
+Console errors now use this format:
+
+```text
+[ERROR] SEM01 - Variable 'X' used before declaration at line 2:11
+```
+
+Implemented error-code categories:
+
+- `LEX01`: lexical recognition error
+- `SYN01`: parser syntax error
+- `SEM01`: variable used before declaration or initialization
+- `SEM02`: duplicate declaration in the same scope
+- `SEM03`: simple type mismatch
+- `SEM04`: undeclared function call
+- `GEN01`, `GEN02`, `GEN03`: generation or output infrastructure errors
+
+Successful semantic validation writes an IntelliJ-friendly comma-separated CSV:
+
+```text
+name,type,scope,declared_at,initialized,notes
+R,number,global,5,true,read input
+CAPEX,number,global,8,true,unit USD
+```
+
+Example path:
+
+`testing/symbols/P3_Input_If_symbols.csv`
+
+Semantic failures do not generate CSV or Java:
+
+```text
+==== testing/P11_FalloSemantico.bks ====
+[STATUS] PARSE OK
+[STATUS] SEMANTIC FAILED
+[ERROR] SEM01 - Variable 'X' used before declaration at line 2:11
+[SYMBOLS] not generated
+[JAVA] not generated
+```
+
+### Test numbering policy
+
+The Phase II test names and numbering are intentionally preserved for continuity:
+
+`P1_HolaMundo.bks` through `P10_FalloSintaxis.bks`.
+
+Phase III adds the required cases as new tests instead of renumbering older files:
+
+- `P11_FalloSemantico.bks`: semantic-negative test.
+- `P12_Recursividad.bks`: recursion/function lookup test.
+
 ## Run all tests with script (Windows PowerShell)
 
 Run and print to console:
@@ -166,4 +226,4 @@ Run and also save output:
 
 Default output file:
 
-`testing/outputs/phase2_parse_results.txt`
+`testing/outputs/phase3_parse_results.txt`

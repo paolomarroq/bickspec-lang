@@ -2,7 +2,7 @@ param(
     [string]$JarPath = "app/target/bickspec-lexer-runner-1.0.0.jar",
     [string]$InputPath = "testing",
     [switch]$SaveOutput,
-    [string]$OutputPath = "testing/outputs/phase2_parse_results.txt"
+    [string]$OutputPath = "testing/outputs/phase3_parse_results.txt"
 )
 
 $repoRoot = Resolve-Path (Join-Path $PSScriptRoot "..\..")

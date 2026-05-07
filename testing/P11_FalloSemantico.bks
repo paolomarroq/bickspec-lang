@@ -1,0 +1,4 @@
+PROJECT "P11 - Fallo Semantico" {
+  TOTAL := X + 10
+  DISPLAY TOTAL
+}

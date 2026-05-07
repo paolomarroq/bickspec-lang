@@ -111,6 +111,7 @@ public final class BickSpecJavaTranslatorVisitor extends BickSpecBaseVisitor<Voi
             JavaExpression expression = index < expressions.size()
                     ? renderExpr(expressions.get(index))
                     : new JavaExpression("0.0", "TODO: missing grouped assignment expression");
+            ensureExternalBatchPlaceholder(expression.code());
             appendAssignment(ids.get(index).getText(), expression);
         }
         return null;
@@ -217,6 +218,12 @@ public final class BickSpecJavaTranslatorVisitor extends BickSpecBaseVisitor<Voi
             line("double " + variableName + " = readNumber(\"" + escapeJava(prompt) + "\");");
         } else {
             line(variableName + " = readNumber(\"" + escapeJava(prompt) + "\");");
+        }
+    }
+
+    private void ensureExternalBatchPlaceholder(String expressionCode) {
+        if (expressionCode.matches("V[0-9]+") && declaredVariables.add(expressionCode)) {
+            line("double " + expressionCode + " = 0.0; // external batch placeholder");
         }
     }
 
