@@ -6,7 +6,7 @@ The final compiler entry point is the packaged jar:
 
 `java -jar app/target/bickspec-compiler-1.0.0.jar <path-to-file-or-directory>`
 
-The repository stops at automatic Java source generation. Generated files under `output/java/` can be compiled and tested manually after the compiler run.
+The compiler flow now continues through generated Java compilation and execution for valid programs. Generated Java files are written under `output/java/`, and compiled classes are written under `output/classes/`.
 
 ## Compiler gates
 
@@ -18,12 +18,16 @@ The compiler pipeline is:
 4. Symbol-table CSV export
 5. Parse-tree graph export
 6. Java generation
+7. Java compilation
+8. Generated program execution
 
-Java generation is allowed only when lexical, syntax, and semantic validation all succeed. Symbol-table CSV files are also generated only after a successful parse and successful semantic validation.
+Java generation, compilation, and execution are allowed only when lexical, syntax, and semantic validation all succeed. Symbol-table CSV files are also generated only after a successful parse and successful semantic validation.
 
 ## Java generation and runtime model
 
-`TranspileRunner` writes generated Java files under `output/java/` only after all gates pass. Each generated file has a `main` method for the project block, helper methods, and a header documenting the BickSpec runtime model.
+`TranspileRunner` writes generated Java files under `output/java/` only after all validation gates pass, compiles them into `output/classes/`, and executes the generated main class. Each generated file has a `main` method for the project block, helper methods, and a header documenting the BickSpec runtime model.
+
+Programs that use `READ` run in interactive mode. The generated Java process inherits the real console stdin/stdout/stderr, and the compiler reports `[EXECUTION] interactive mode`. Companion stdin files are not used. Non-interactive generated programs are captured and shown in the `PROGRAM OUTPUT` box.
 
 Money is stored internally as USD:
 

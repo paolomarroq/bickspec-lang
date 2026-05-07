@@ -9,6 +9,7 @@ testing/trees/*_ParseTree.svg
 testing/trees/*_ParseTree.png
 output/java/*_Generated.java
 output/java/*_Generated.class
+output/classes/*_Generated.class
 output/symbols/*_symbols.csv
 output/trees/*_ParseTree.dot
 output/trees/*_ParseTree.svg

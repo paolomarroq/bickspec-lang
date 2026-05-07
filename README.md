@@ -10,9 +10,11 @@ The repository currently delivers the mandatory compiler/transpiler core:
 - Export a semantic symbol table CSV for valid programs.
 - Export parse tree DOT/SVG artifacts for valid programs.
 - Automatically generate coherent Java source under `output/java/`.
+- Compile generated Java classes under `output/classes/`.
+- Execute generated Java for valid programs.
 - Block Java generation when lexical, syntax, or semantic errors are found.
 
-This state intentionally stops at automatic `.java` generation. Generated Java files are ready to compile and test manually, but this commit does not add automatic `javac` or `java` execution. An installer and optional IDE/editor/plugin work are outside the mandatory core scope.
+An installer and optional IDE/editor/plugin work are outside the mandatory core scope.
 
 ## Architecture
 
@@ -24,12 +26,14 @@ The compiler pipeline is:
 4. Symbol CSV export to `output/symbols/`
 5. Parse tree DOT/SVG export to `output/trees/`
 6. Java generation to `output/java/`
+7. Java compilation to `output/classes/`
+8. Generated program execution
 
 Main Java components:
 
 - `LexerRunner`: token inspection compatibility tool.
 - `ParseRunner`: parse/semantic validation plus symbol and tree exports.
-- `TranspileRunner`: final compiler entry point for Java generation.
+- `TranspileRunner`: final compiler entry point for validation, Java generation, Java compilation, and execution.
 - `BickSpecSemanticVisitor`: semantic checks and symbol registration.
 - `BickSpecJavaTranslatorVisitor`: Java source generation and runtime helpers.
 
@@ -139,7 +143,11 @@ Expected successful file output:
 [TREE] output/trees/P6_Imports_NPV_ParseTree.svg
 [JAVA] output/java/P6_Imports_NPV_Generated.java
 [ACTION] Java generation completed successfully
+[BUILD] output/classes/P6_Imports_NPV_Generated.class
+[EXECUTION] completed successfully
 ```
+
+Interactive BickSpec programs that use `READ` inherit the real console stdin/stdout/stderr. The compiler reports `[EXECUTION] interactive mode`, does not use companion stdin files, and does not put interactive output inside the `PROGRAM OUTPUT` box.
 
 Expected failing file output:
 
@@ -161,6 +169,7 @@ Default generated-artifact structure:
 ```text
 output/
   java/       generated .java files
+  classes/    compiled .class files
   trees/      parse tree .dot and .svg files
   symbols/    symbol table .csv files
   reports/    compiler summary reports and saved console logs
@@ -227,7 +236,7 @@ dot -V
 java -jar app/target/bickspec-compiler-1.0.0.jar testing/P1_HolaMundo.bks
 ```
 
-For valid files, `TranspileRunner` prints parse status, semantic status, symbol CSV path, parse tree graph path, generated Java path, and a completion action.
+For valid files, `TranspileRunner` prints parse status, semantic status, symbol CSV path, parse tree graph path, generated Java path, compiled class path, execution status, and generated program output.
 
 Example generated file:
 
@@ -365,6 +374,8 @@ Example successful generation output:
 [TREE] output/trees/P6_Imports_NPV_ParseTree.svg
 [JAVA] output/java/P6_Imports_NPV_Generated.java
 [ACTION] Java generation completed successfully
+[BUILD] output/classes/P6_Imports_NPV_Generated.class
+[EXECUTION] completed successfully
 ```
 
 Example generated code:

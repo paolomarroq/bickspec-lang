@@ -319,11 +319,15 @@ public final class BickSpecJavaTranslatorVisitor extends BickSpecBaseVisitor<Voi
     private static void appendStandardHelpers(StringBuilder source) {
         source.append("    private static double readNumber(String prompt) {\n");
         source.append("        System.out.print(prompt + \": \");\n");
+        source.append("        System.out.flush();\n");
         source.append("        if (INPUT.hasNextDouble()) {\n");
         source.append("            return INPUT.nextDouble();\n");
         source.append("        }\n");
-        source.append("        INPUT.next();\n");
-        source.append("        return 0.0;\n");
+        source.append("        if (INPUT.hasNext()) {\n");
+        source.append("            String token = INPUT.next();\n");
+        source.append("            throw new IllegalArgumentException(\"Expected numeric input for '\" + prompt + \"' but received '\" + token + \"'.\");\n");
+        source.append("        }\n");
+        source.append("        throw new IllegalStateException(\"Missing numeric input for '\" + prompt + \"'.\");\n");
         source.append("    }\n\n");
         source.append("    private static double convert(double value, String unit) {\n");
         source.append("        if (isCurrency(unit)) {\n");
