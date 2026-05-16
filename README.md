@@ -12,6 +12,14 @@ BickSpec is intended for:
 
 As a product, BickSpec provides a readable financial DSL, a Java/ANTLR compiler architecture, a Java target runtime, command-line execution, generated parse-tree visualizations, symbol tables, diagnostics, and organized build outputs.
 
+The complete offline documentation site is available at:
+
+```text
+docs/site/bickspec_documentation.html
+```
+
+The VS Code extension can open that documentation through **BickSpec: Open Documentation** and, when enabled, opens its bundled local copy once on first activation. The compiler remains in `bickspec-lang` and is the same compiler used by surrounding tooling such as Studio and the VS Code extension.
+
 ## Key Language Features
 
 - Assignments with `:=`
@@ -331,6 +339,11 @@ bickspec-lang/
     BickSpec_Spec_ANTLR_FaseII.pdf
     BickSpec_Spec_ANTLR_FaseIII.pdf
     PHASE_III_SEMANTICS.md
+    site/
+      bickspec_documentation.html
+      assets/
+      screenshots/
+      README.md
   input/
     README.md
   testing/
@@ -347,6 +360,9 @@ bickspec-lang/
     trees/
     symbols/
     reports/
+  vscode-extension/
+    media/docs/
+      bickspec_documentation.html
 ```
 
 ## Final Product Status

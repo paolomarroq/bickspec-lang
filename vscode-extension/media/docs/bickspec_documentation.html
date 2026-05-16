@@ -1,0 +1,218 @@
+<!doctype html>
+<html lang="en" data-theme="dark">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>BickSpec Documentation</title>
+  <link rel="icon" href="assets/icon.png">
+  <style>
+    :root{--bg:#07111f;--panel:#0b1b31;--panel2:#0e233d;--ink:#edf7fb;--muted:#a8bdc8;--line:#24465a;--teal:#32d6c4;--amber:#f2c66d;--danger:#ff8f97;--code:#06101c}
+    html[data-theme="light"]{--bg:#f5faff;--panel:#fff;--panel2:#edf6fb;--ink:#102033;--muted:#526675;--line:#c8dce6;--teal:#087f78;--amber:#a06b00;--danger:#b42332;--code:#eef5f8}
+    *{box-sizing:border-box}html{scroll-behavior:smooth}body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.65 Sora,system-ui,sans-serif}
+    a{color:inherit}.layout{display:grid;grid-template-columns:280px minmax(0,1fr)}aside{position:sticky;top:0;height:100vh;overflow:auto;padding:24px;border-right:1px solid var(--line);background:linear-gradient(180deg,var(--panel),var(--bg))}
+    main{max-width:1120px;padding:28px 38px 80px}.logo{width:190px;max-width:100%;height:auto}.hero{padding:28px;border:1px solid var(--line);border-radius:24px;background:radial-gradient(circle at top right,rgba(50,214,196,.18),transparent 38%),var(--panel)}
+    h1{font-size:42px;line-height:1.1;margin:14px 0 6px}h2{font-size:27px;margin:42px 0 14px}h3{font-size:18px;margin:24px 0 8px}.muted{color:var(--muted)}.badges,.cards,.flow,.examples{display:flex;flex-wrap:wrap;gap:10px}
+    .badge,.card,.diag,.artifact{border:1px solid var(--line);background:var(--panel);border-radius:16px}.badge{padding:6px 11px;color:var(--teal)}.card{padding:16px;flex:1 1 240px}.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(250px,1fr));gap:12px}
+    nav{display:grid;gap:5px;margin-top:20px}nav a{padding:7px 10px;text-decoration:none;border-radius:10px;color:var(--muted)}nav a.active,nav a:hover{background:var(--panel2);color:var(--ink)}
+    input{width:100%;padding:10px 12px;border-radius:12px;border:1px solid var(--line);background:var(--panel2);color:var(--ink)}button{cursor:pointer}
+    .tools{display:flex;gap:8px;margin-top:14px}.tools button,.copy{border:1px solid var(--line);background:var(--panel2);color:var(--ink);padding:8px 10px;border-radius:10px}
+    pre{position:relative;overflow:auto;padding:16px;background:var(--code);border:1px solid var(--line);border-radius:16px;font-family:"IBM Plex Mono",Consolas,monospace}.copy{position:absolute;right:8px;top:8px}
+    code{font-family:"IBM Plex Mono",Consolas,monospace}.flow span{padding:10px 12px;border:1px solid var(--line);border-radius:999px;background:var(--panel)}table{width:100%;border-collapse:collapse;background:var(--panel);border-radius:16px;overflow:hidden}td,th{padding:10px;border-bottom:1px solid var(--line);text-align:left}
+    .diag,.artifact{padding:14px}.diag strong{display:block}.lex{border-left:4px solid #ff9e64}.syn{border-left:4px solid #ff8f97}.sem{border-left:4px solid var(--amber)}.gen{border-left:4px solid #9f8cff}.build,.exec{border-left:4px solid var(--danger)}.fs{border-left:4px solid #9aa8b2}.link{border-left:4px solid var(--teal)}
+    figure{margin:18px 0}.shot{width:100%;border:1px solid var(--line);border-radius:18px}.tree{white-space:pre-wrap}.timeline li{margin-bottom:10px}details{border:1px solid var(--line);border-radius:16px;background:var(--panel);padding:12px 16px;margin:10px 0}summary{cursor:pointer;font-weight:700}
+    @media(max-width:860px){.layout{display:block}aside{position:static;height:auto}main{padding:22px}h1{font-size:34px}}
+  </style>
+</head>
+<body>
+<div class="layout">
+  <aside>
+    <img class="logo" src="assets/logo_dark_transparent.png" alt="BickSpec">
+    <p class="muted">Offline reference for the language, compiler, Studio, and VS Code extension.</p>
+    <input id="search" placeholder="Filter sections…">
+    <div class="tools"><button id="theme">Light mode</button></div>
+    <nav id="nav"></nav>
+  </aside>
+  <main>
+    <section id="overview" class="hero">
+      <img class="logo" src="assets/logo_dark_transparent.png" alt="BickSpec logo">
+      <h1>BickSpec Documentation</h1>
+      <p class="muted">Language, Studio, and VS Code Extension</p>
+      <div class="badges"><span class="badge">.bks DSL</span><span class="badge">ANTLR4</span><span class="badge">Java Compiler</span><span class="badge">BickSpec Studio</span><span class="badge">VS Code Extension</span><span class="badge">Spec Grid</span></div>
+    </section>
+
+    <section id="ecosystem"><h2>Ecosystem Overview</h2>
+      <div class="grid"><article class="card"><h3>BickSpec Language / Compiler</h3><p>A finance-oriented DSL compiled by the external Java/ANTLR project in <code>bickspec-lang</code>.</p></article><article class="card"><h3>BickSpec Studio</h3><p>Electron desktop IDE for editing, running, reviewing artifacts, and exporting reports.</p></article><article class="card"><h3>VS Code Extension</h3><p>Lightweight editor integration for <code>.bks</code> files, commands, artifacts, diagnostics, and setup.</p></article></div>
+      <p>Studio and the VS Code extension do not duplicate the compiler. Both use the real <code>bickspec-compiler-1.0.0.jar</code> built from <code>bickspec-lang</code>.</p>
+    </section>
+
+    <section id="language"><h2>Language Reference</h2>
+      <p>A program has zero or more <code>IMPORT</code>, <code>FX</code>, and <code>FUNCTION</code> declarations followed by exactly one <code>PROJECT</code> block.</p>
+<pre><code>IMPORT finance
+FX GTQ := 7.80
+FUNCTION margen(ingresos, costos) = (ingresos - costos) / ingresos
+PROJECT "Example" {
+  DISPLAY "Hello"
+}</code></pre>
+      <table><thead><tr><th>Construct</th><th>Syntax</th></tr></thead><tbody>
+      <tr><td>Import</td><td><code>IMPORT ID</code></td></tr><tr><td>FX rate</td><td><code>FX currency := numberLiteral</code></td></tr><tr><td>Assignment</td><td><code>ID := expr</code></td></tr><tr><td>Batch assignment</td><td><code>id1, id2 := expr1, expr2</code></td></tr><tr><td>Output</td><td><code>DISPLAY expr</code> or <code>WRITE expr</code></td></tr><tr><td>Input</td><td><code>READ ID</code></td></tr><tr><td>Conditional</td><td><code>IF condition THEN ... ELSE ... END</code></td></tr><tr><td>Loops</td><td><code>WHILE condition DO ... END</code>, <code>REPEAT INT TIMES ... END</code></td></tr><tr><td>Function</td><td><code>FUNCTION name(params...) = expr</code></td></tr></tbody></table>
+      <h3>Expressions, values, and comments</h3>
+      <p>Expressions support arithmetic, comparison/equality, logical operators, parentheses, numbers, strings, identifiers, calls, money literals, time literals, and lowercase conversion/display suffixes such as <code>to</code> and <code>in</code>. Currencies include <code>USD</code>, <code>GTQ</code>, and <code>EUR</code>; time units include <code>year</code>, <code>month</code>, <code>quarter</code>, <code>week</code>, and <code>day</code>. Comments use <code>#</code> or <code>/* ... */</code>.</p>
+<pre><code>CAPEX := CAPEX_GTQ to USD
+DISPLAY NPV_VAL in GTQ
+MESES := MESES + 1 month</code></pre>
+      <h3>Lexer / token reference</h3><p><code>ID</code>, <code>INT</code>, <code>FLOAT</code>, strings, <code>:=</code>, <code>=</code>, arithmetic <code>+ - * /</code>, comparisons <code>&gt;= &lt;= == != &gt; &lt;</code>, logical <code>&amp;&amp; || !</code>, braces, parentheses, comma, keywords, currencies, and time units are tokenized by the grammar.</p>
+    </section>
+
+    <section id="pipeline"><h2>Compiler Pipeline</h2>
+      <div class="flow"><span>.bks file</span><span>BickSpecLexer</span><span>BickSpecParser</span><span>Parse Tree</span><span>Semantic Validation</span><span>Symbol Table</span><span>Java Generation</span><span>javac Build</span><span>Execution</span><span>Artifacts</span></div>
+      <p>The final JAR entry point is <code>com.bickspec.app.TranspileRunner</code>. Core implementation pieces include <code>ParseRunner</code>, <code>BickSpecParseSupport</code>, <code>BickSpecSemanticVisitor</code>, <code>BickSpecJavaTranslatorVisitor</code>, <code>SymbolTable</code>/<code>SymbolInfo</code>, <code>SymbolTableCsvExporter</code>, <code>CompilerDiagnostic</code>, <code>SemanticResult</code>, and <code>ParseTreeGraphGenerator</code>.</p>
+    </section>
+
+    <section id="artifacts"><h2>Generated Artifacts</h2>
+      <div class="grid"><div class="artifact"><strong>Java</strong><br><code>output/java/&lt;Program&gt;_Generated.java</code></div><div class="artifact"><strong>Classes</strong><br><code>output/classes/&lt;Program&gt;_Generated.class</code></div><div class="artifact"><strong>Symbols</strong><br><code>output/symbols/&lt;Program&gt;_symbols.csv</code></div><div class="artifact"><strong>Parse trees</strong><br><code>output/trees/&lt;Program&gt;_ParseTree.svg</code></div><div class="artifact"><strong>Reports</strong><br><code>output/reports/generation_summary.csv</code></div></div>
+    </section>
+
+    <section id="diagnostics"><h2>Diagnostics</h2>
+      <p>The compiler emits <code>LEX</code>, <code>SYN</code>, <code>SEM</code>, and <code>GEN</code> families. Studio and the VS Code extension also classify build, runtime, filesystem, and link conditions at the tooling layer.</p>
+      <div class="grid"><div class="diag lex"><strong>LEX</strong> Lexical</div><div class="diag syn"><strong>SYN</strong> Syntax</div><div class="diag sem"><strong>SEM</strong> Semantic</div><div class="diag gen"><strong>GEN</strong> Generation</div><div class="diag build"><strong>BUILD</strong> Build</div><div class="diag exec"><strong>EXEC / EXECUTION</strong> Runtime</div><div class="diag fs"><strong>FS</strong> File System</div><div class="diag link"><strong>LINK</strong> Compiler Link</div></div>
+<pre><code>[ERROR] LEX01 - Token recognition error at: '@' at line 2:10
+[ERROR] SYN01 - Mismatched input 'DISPLAY' expecting ... at line 3:4
+[ERROR] SEM01 - Variable 'X' used before declaration at line 2:11
+[ERROR] GEN06 - Generated Java compilation failed</code></pre>
+    </section>
+
+    <section id="cli"><h2>CLI Usage</h2>
+<pre><code>mvn -f app/pom.xml package
+java -jar app/target/bickspec-compiler-1.0.0.jar testing/P1_HolaMundo.bks
+java -jar app/target/bickspec-compiler-1.0.0.jar testing</code></pre>
+    </section>
+
+    <section id="examples"><h2>Examples Gallery</h2>
+      <details open><summary>Hello World</summary><pre><code>PROJECT "P1 - Hola Mundo" {
+  DISPLAY "Hola Mundo"
+}</code></pre></details>
+      <details><summary>Arithmetic</summary><pre><code>PROJECT "P2 - Operacion aritmetica" {
+  A := 10
+  B := 3
+  RESULTADO := (A + B) * 2 / 5
+  DISPLAY "Resultado:"
+  DISPLAY RESULTADO
+}</code></pre></details>
+      <details><summary>Input + IF</summary><pre><code>IMPORT finance
+FX GTQ := 7.80
+PROJECT "P3 - Input + IF" {
+  DISPLAY "Ingrese tasa (0.xx):"
+  READ R
+  DISPLAY "Ingrese CAPEX en GTQ:"
+  READ CAPEX_GTQ
+  CAPEX := CAPEX_GTQ to USD
+  IF R &lt; 0.20 THEN
+    DISPLAY "Tasa aceptable"
+  ELSE
+    DISPLAY "Tasa alta"
+  END
+  DISPLAY "CAPEX en USD:"
+  DISPLAY CAPEX
+}</code></pre></details>
+      <details><summary>Function</summary><pre><code>FUNCTION margen(ingresos, costos) = (ingresos - costos) / ingresos
+PROJECT "P4 - Funcion" {
+  INGRESOS := 15000 USD
+  COSTOS := 9000 USD
+  DISPLAY margen(INGRESOS, COSTOS)
+}</code></pre></details>
+      <details><summary>WHILE</summary><pre><code>PROJECT "P5 - While (Runway)" {
+  DISPLAY "CASH inicial USD:"
+  READ CASH
+  MESES := 0
+  WHILE CASH &gt; 0 DO
+    CASH := CASH - 1000
+    MESES := MESES + 1 month
+  END
+  DISPLAY MESES
+}</code></pre></details>
+      <details><summary>NPV</summary><pre><code>IMPORT finance
+IMPORT math
+FX GTQ := 7.80
+PROJECT "P6 - Imports + NPV" {
+  R := 0.12
+  CAPEX := 500000 GTQ
+  CF1 := 80000 GTQ
+  CF2 := 120000 GTQ
+  CF3 := 150000 GTQ
+  NPV_VAL := NPV(R, CAPEX, CF1, CF2, CF3)
+  DISPLAY "NPV USD:"
+  DISPLAY NPV_VAL
+}</code></pre></details>
+      <details><summary>PAYBACK</summary><pre><code>PROJECT "Payback" {
+  CAPEX := 1000 USD
+  CF1 := 300 USD
+  CF2 := 400 USD
+  CF3 := 500 USD
+  PB := PAYBACK(CAPEX, CF1, CF2, CF3)
+  DISPLAY PB
+}</code></pre></details>
+    </section>
+
+    <section id="studio"><h2>BickSpec Studio</h2>
+      <p>Studio is an Electron + React + TypeScript + Vite desktop IDE using Monaco Editor. It includes syntax highlighting, snippets, file explorer, tabs, recent projects, settings, a first-run setup wizard, linked compiler-repository configuration, result views, and report exports.</p>
+      <figure><img class="shot" src="screenshots/editor.png" alt="BickSpec Studio editor screenshot"></figure>
+      <div class="grid"><div class="card"><h3>Interactive</h3><p>Live stdin/stdout for <code>READ</code> programs.</p></div><div class="card"><h3>Program Output</h3><p>Runtime output for non-interactive runs.</p></div><div class="card"><h3>Errors</h3><p>Structured diagnostics.</p></div><div class="card"><h3>Build Log</h3><p>Compiler/build pipeline.</p></div></div>
+      <p>Installers are produced for Windows and macOS. Studio links to the real compiler repository rather than embedding compiler source.</p>
+    </section>
+
+    <section id="vscode"><h2>VS Code Extension</h2>
+      <p><strong>BickSpec Finance DSL</strong> registers language id <code>bickspec</code> for <code>.bks</code> files, offers TextMate highlighting, snippets, a compiler output channel, status bar actions, Problems-panel diagnostics, artifact commands, a setup wizard, and integrated-terminal execution for <code>READ</code> programs.</p>
+      <table><tbody><tr><td>BickSpec: Run Current File</td><td>BickSpec: Run Folder</td></tr><tr><td>BickSpec: Show Compiler Output</td><td>BickSpec: Open Generated Java</td></tr><tr><td>BickSpec: Open Symbol Table CSV</td><td>BickSpec: Open Parse Tree SVG</td></tr><tr><td>BickSpec: Open Setup Wizard</td><td>BickSpec: Validate Environment</td></tr><tr><td>BickSpec: Select Compiler JAR</td><td>BickSpec: Select bickspec-lang Repository</td></tr><tr><td>BickSpec: Run Setup Test</td><td>BickSpec: Reset Setup</td></tr></tbody></table>
+      <figure><img class="shot" src="screenshots/vs.png" alt="VS Code extension screenshot"></figure>
+    </section>
+
+    <section id="setup"><h2>Unified Setup Guide</h2>
+      <ol><li>Install Java; Java 21 is recommended.</li><li>Install Maven to build the compiler JAR.</li><li>Optionally install Graphviz for SVG parse-tree rendering.</li><li>Build the compiler with <code>mvn -f app/pom.xml package</code>.</li><li>In Studio or the VS Code extension, select or clone the <code>bickspec-lang</code> repository and validate the JAR.</li><li>Run the setup test.</li></ol>
+<pre><code>Resultado:
+5.2</code></pre>
+      <figure><img class="shot" src="screenshots/wizard.png" alt="Setup wizard screenshot"></figure>
+    </section>
+
+    <section id="reports"><h2>Reports and Exports</h2>
+      <p>Report Preview uses real normalized run state. PDF, Excel, and CSV exports include summary data, runtime output or interactive transcript, diagnostics, artifacts, and build log. Export helpers remove the visual Program Output box and emit clean runtime lines; interactive exports use role/content rows.</p>
+      <figure><img class="shot" src="screenshots/reports.png" alt="Report preview screenshot"></figure>
+    </section>
+
+    <section id="architecture"><h2>Architecture Overview</h2><pre class="tree"><code>bickspec-lang
+└─ bickspec-compiler-1.0.0.jar
+   ├─ BickSpec Studio
+   │  ├─ editor
+   │  ├─ interactive mode
+   │  ├─ artifacts
+   │  └─ reports
+   └─ VS Code Extension
+      ├─ syntax highlighting
+      ├─ snippets
+      ├─ output channel
+      ├─ diagnostics
+      └─ setup wizard</code></pre></section>
+
+    <section id="phases"><h2>Development Phases</h2><ol class="timeline"><li><strong>Fase I:</strong> Lexer, regex, grammar, initial <code>.bks</code> specification.</li><li><strong>Fase II:</strong> Parser, parse tree, semantic visitor trace, DOT/SVG, initial Java translation.</li><li><strong>Fase III:</strong> Symbol table, semantic validation, Java generation, build, execution, final JAR.</li><li><strong>Fase IV:</strong> VS Code extension with editing, highlighting, snippets, commands, diagnostics, artifacts, terminal READ support, setup wizard.</li><li><strong>Studio:</strong> desktop IDE/product layer.</li></ol></section>
+
+    <section id="troubleshooting"><h2>Troubleshooting</h2>
+      <details><summary>Java not found</summary><p>Install Java or select a Java executable in setup. Java 21 is recommended.</p></details>
+      <details><summary>Compiler JAR missing</summary><p>Build from the repo with <code>mvn -f app/pom.xml package</code>.</p></details>
+      <details><summary>Wrong repository folder selected</summary><p>Select the root containing <code>app/pom.xml</code> and <code>app/src</code>, not a nested testing/output/target folder.</p></details>
+      <details><summary>Graphviz missing</summary><p>DOT output can still exist; SVG rendering may be unavailable until Graphviz is installed.</p></details>
+      <details><summary>READ program needs input</summary><p>Use interactive mode in Studio or the integrated terminal in VS Code.</p></details>
+      <details><summary>Artifacts not found</summary><p>Check build log, compiler output paths, and whether generation completed.</p></details>
+      <details><summary>Diagnostics shown</summary><p>Review Studio Errors or VS Code Problems for classified diagnostics and suggestions.</p></details>
+      <details><summary>Unsigned installer warning</summary><p>Windows may show SmartScreen; macOS may require right-click → Open during testing.</p></details>
+    </section>
+  </main>
+</div>
+<script>
+const sections=[...document.querySelectorAll('main section[id]')],nav=document.querySelector('#nav'),search=document.querySelector('#search');
+for(const s of sections){const a=document.createElement('a');a.href='#'+s.id;a.textContent=s.querySelector('h2')?.textContent||'Overview';nav.append(a)}
+for(const pre of document.querySelectorAll('pre')){const b=document.createElement('button');b.className='copy';b.textContent='Copy';b.onclick=async()=>{const text=pre.innerText.replace(/^Copy\\n/,'');try{await navigator.clipboard.writeText(text)}catch{const t=document.createElement('textarea');t.value=text;document.body.append(t);t.select();document.execCommand('copy');t.remove()}b.textContent='Copied';setTimeout(()=>b.textContent='Copy',900)};pre.append(b)}
+const links=[...nav.querySelectorAll('a')];new IntersectionObserver(es=>es.forEach(e=>{if(e.isIntersecting){links.forEach(a=>a.classList.toggle('active',a.hash==='#'+e.target.id))}}),{rootMargin:'-20% 0px -70%'}).observe(sections[0]);sections.slice(1).forEach(s=>new IntersectionObserver(es=>es.forEach(e=>{if(e.isIntersecting){links.forEach(a=>a.classList.toggle('active',a.hash==='#'+e.target.id))}}),{rootMargin:'-20% 0px -70%'}).observe(s));
+search.oninput=()=>{const q=search.value.toLowerCase();sections.forEach(s=>s.style.display=s.innerText.toLowerCase().includes(q)?'':'none')};
+document.querySelector('#theme').onclick=e=>{const light=document.documentElement.dataset.theme!=='light';document.documentElement.dataset.theme=light?'light':'dark';e.target.textContent=light?'Dark mode':'Light mode';document.querySelectorAll('.logo').forEach(i=>i.src=light?'assets/logo_transparent.png':'assets/logo_dark_transparent.png')};
+</script>
+</body></html>
+

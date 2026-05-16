@@ -24,6 +24,7 @@ The extension does not reimplement the language compiler. It invokes the existin
 - Converts compiler `[ERROR]` lines into VS Code diagnostics when source locations are available.
 - Adds status bar shortcuts while a `.bks` file is active.
 - Opens generated Java, symbol table CSV, and parse tree SVG artifacts.
+- Bundles an offline documentation page and can open it in the user's browser.
 
 ## How It Works
 
@@ -136,6 +137,24 @@ The wizard can:
 
 If Java is missing, install Java 21 or configure `bickspec.javaPath`. If the compiler JAR is missing, select `bickspec-compiler-1.0.0.jar` or build it from the main repository with `mvn -f app/pom.xml package`.
 
+## Bundled Documentation
+
+The extension includes a local offline documentation page at:
+
+```text
+media/docs/bickspec_documentation.html
+```
+
+It opens automatically once on first activation when:
+
+```json
+{
+  "bickspec.documentation.openOnFirstActivation": true
+}
+```
+
+You can also open it manually at any time from the Command Palette with **BickSpec: Open Documentation**.
+
 Jar resolution order:
 
 1. `bickspec.compiler.jarPath` if configured.
@@ -152,6 +171,7 @@ Open the Command Palette and run:
 - **BickSpec: Open Generated Java**
 - **BickSpec: Open Symbol Table CSV**
 - **BickSpec: Open Parse Tree SVG**
+- **BickSpec: Open Documentation**
 - **BickSpec: Open Setup Wizard**
 - **BickSpec: Validate Environment**
 - **BickSpec: Select Compiler JAR**

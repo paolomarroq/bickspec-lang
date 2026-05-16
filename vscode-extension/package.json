@@ -21,7 +21,9 @@
     "theme": "dark"
   },
   "activationEvents": [
+    "onStartupFinished",
     "onLanguage:bickspec",
+    "onCommand:bickspec.openDocumentation",
     "onCommand:bickspec.openSetupWizard",
     "onCommand:bickspec.validateEnvironment",
     "onCommand:bickspec.selectCompilerJar",
@@ -110,6 +112,11 @@
       {
         "command": "bickspec.openParseTreeSvg",
         "title": "BickSpec: Open Parse Tree SVG",
+        "category": "BickSpec"
+      },
+      {
+        "command": "bickspec.openDocumentation",
+        "title": "BickSpec: Open Documentation",
         "category": "BickSpec"
       },
       {
@@ -202,6 +209,11 @@
             "type": "boolean",
             "default": true,
             "description": "Prompt to open the setup wizard the first time BickSpec is activated."
+          },
+          "bickspec.documentation.openOnFirstActivation": {
+            "type": "boolean",
+            "default": true,
+            "description": "Open the bundled BickSpec documentation once on the first extension activation."
           }
         }
       }

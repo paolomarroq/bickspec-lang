@@ -37,6 +37,7 @@ function activate(context) {
     vscode.commands.registerCommand("bickspec.openGeneratedJava", () => openArtifact("java")),
     vscode.commands.registerCommand("bickspec.openSymbolTable", () => openArtifact("symbols")),
     vscode.commands.registerCommand("bickspec.openParseTreeSvg", () => openArtifact("tree")),
+    vscode.commands.registerCommand("bickspec.openDocumentation", () => openDocumentation(context)),
     vscode.commands.registerCommand("bickspec.openSetupWizard", () => SetupWizardPanel.createOrShow(context)),
     vscode.commands.registerCommand("bickspec.validateEnvironment", async () => {
       const panel = SetupWizardPanel.createOrShow(context);
@@ -73,6 +74,7 @@ function activate(context) {
   );
 
   updateBickSpecStatusBar();
+  maybeOpenDocumentation(context);
   maybePromptSetup(context);
 }
 
@@ -449,6 +451,26 @@ async function maybePromptSetup(context) {
   if (answer === "Open Setup Wizard") {
     SetupWizardPanel.createOrShow(context);
   }
+}
+
+async function openDocumentation(context) {
+  const docsUri = vscode.Uri.joinPath(
+    context.extensionUri,
+    "media",
+    "docs",
+    "bickspec_documentation.html"
+  );
+  await vscode.env.openExternal(docsUri);
+}
+
+async function maybeOpenDocumentation(context) {
+  const openOnFirstActivation = vscode.workspace.getConfiguration("bickspec.documentation").get("openOnFirstActivation", true);
+  const hasOpened = context.globalState.get("bickspec.documentation.hasOpened", false);
+  if (!openOnFirstActivation || hasOpened) {
+    return;
+  }
+  await openDocumentation(context);
+  await context.globalState.update("bickspec.documentation.hasOpened", true);
 }
 
 module.exports = {
