@@ -13,4 +13,5 @@ PROJECT "P3 - Input + IF" {
   END
   DISPLAY "CAPEX en USD:"
   DISPLAY CAPEX
+  
 }

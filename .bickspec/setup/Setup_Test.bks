@@ -1,0 +1,8 @@
+PROJECT "Setup Test" {
+  A := 10
+  B := 3
+  RESULTADO := (A + B) * 2 / 5
+
+  DISPLAY "Resultado:"
+  DISPLAY RESULTADO
+}

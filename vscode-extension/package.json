@@ -22,6 +22,12 @@
   },
   "activationEvents": [
     "onLanguage:bickspec",
+    "onCommand:bickspec.openSetupWizard",
+    "onCommand:bickspec.validateEnvironment",
+    "onCommand:bickspec.selectCompilerJar",
+    "onCommand:bickspec.selectCompilerRepo",
+    "onCommand:bickspec.runSetupTest",
+    "onCommand:bickspec.resetSetup",
     "onCommand:bickspec.runCurrentFile",
     "onCommand:bickspec.runFolder",
     "onCommand:bickspec.showCompilerOutput",
@@ -105,6 +111,36 @@
         "command": "bickspec.openParseTreeSvg",
         "title": "BickSpec: Open Parse Tree SVG",
         "category": "BickSpec"
+      },
+      {
+        "command": "bickspec.openSetupWizard",
+        "title": "BickSpec: Open Setup Wizard",
+        "category": "BickSpec"
+      },
+      {
+        "command": "bickspec.validateEnvironment",
+        "title": "BickSpec: Validate Environment",
+        "category": "BickSpec"
+      },
+      {
+        "command": "bickspec.selectCompilerJar",
+        "title": "BickSpec: Select Compiler JAR",
+        "category": "BickSpec"
+      },
+      {
+        "command": "bickspec.selectCompilerRepo",
+        "title": "BickSpec: Select bickspec-lang Repository",
+        "category": "BickSpec"
+      },
+      {
+        "command": "bickspec.runSetupTest",
+        "title": "BickSpec: Run Setup Test",
+        "category": "BickSpec"
+      },
+      {
+        "command": "bickspec.resetSetup",
+        "title": "BickSpec: Reset Setup",
+        "category": "BickSpec"
       }
     ],
     "menus": {
@@ -136,6 +172,36 @@
             "type": "string",
             "default": "",
             "description": "Path to bickspec-compiler-1.0.0.jar. Relative paths are resolved from the workspace folder. Leave empty to auto-detect app/target/bickspec-compiler-1.0.0.jar."
+          },
+          "bickspec.javaPath": {
+            "type": "string",
+            "default": "",
+            "description": "Optional path to the Java executable. Leave empty to use java from PATH."
+          },
+          "bickspec.compiler.repoPath": {
+            "type": "string",
+            "default": "",
+            "description": "Optional path to the local bickspec-lang repository."
+          },
+          "bickspec.compiler.githubUrl": {
+            "type": "string",
+            "default": "https://github.com/paolomarroq/bickspec-lang",
+            "description": "GitHub URL used when cloning the BickSpec compiler repository."
+          },
+          "bickspec.outputDirectory": {
+            "type": "string",
+            "default": "output",
+            "description": "Compiler output directory, resolved from the workspace root when relative."
+          },
+          "bickspec.setup.completed": {
+            "type": "boolean",
+            "default": false,
+            "description": "Whether the BickSpec setup wizard has completed successfully."
+          },
+          "bickspec.setup.autoOpenOnFirstLaunch": {
+            "type": "boolean",
+            "default": true,
+            "description": "Prompt to open the setup wizard the first time BickSpec is activated."
           }
         }
       }

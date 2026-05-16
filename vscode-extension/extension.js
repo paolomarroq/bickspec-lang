@@ -2,6 +2,8 @@ const vscode = require("vscode");
 const cp = require("child_process");
 const fs = require("fs");
 const path = require("path");
+const SetupWizardPanel = require("./setup/SetupWizardPanel");
+const setupServices = require("./setup/setupServices");
 
 const JAR_NAME = "bickspec-compiler-1.0.0.jar";
 let outputChannel;
@@ -35,12 +37,43 @@ function activate(context) {
     vscode.commands.registerCommand("bickspec.openGeneratedJava", () => openArtifact("java")),
     vscode.commands.registerCommand("bickspec.openSymbolTable", () => openArtifact("symbols")),
     vscode.commands.registerCommand("bickspec.openParseTreeSvg", () => openArtifact("tree")),
+    vscode.commands.registerCommand("bickspec.openSetupWizard", () => SetupWizardPanel.createOrShow(context)),
+    vscode.commands.registerCommand("bickspec.validateEnvironment", async () => {
+      const panel = SetupWizardPanel.createOrShow(context);
+      panel.postState(await panel.collectState());
+    }),
+    vscode.commands.registerCommand("bickspec.selectCompilerJar", async () => {
+      const panel = SetupWizardPanel.createOrShow(context);
+      await panel.selectJar();
+    }),
+    vscode.commands.registerCommand("bickspec.selectCompilerRepo", async () => {
+      const panel = SetupWizardPanel.createOrShow(context);
+      await panel.selectRepo();
+    }),
+    vscode.commands.registerCommand("bickspec.runSetupTest", async () => {
+      const result = await setupServices.runSetupTest();
+      if (result.status === "success") {
+        vscode.window.showInformationMessage("BickSpec setup test compiled successfully.");
+      } else {
+        vscode.window.showErrorMessage(result.suggestion);
+      }
+      const panel = SetupWizardPanel.createOrShow(context);
+      panel.postResult("test", result);
+    }),
+    vscode.commands.registerCommand("bickspec.resetSetup", async () => {
+      await context.globalState.update("bickspec.setup.completed", false);
+      await vscode.workspace.getConfiguration("bickspec.setup").update("completed", false, vscode.ConfigurationTarget.Global);
+      vscode.window.showInformationMessage("BickSpec setup state was reset.");
+      const panel = SetupWizardPanel.createOrShow(context);
+      panel.postState(await panel.collectState());
+    }),
     vscode.window.onDidChangeActiveTextEditor(updateBickSpecStatusBar),
     vscode.workspace.onDidOpenTextDocument(updateBickSpecStatusBar),
     vscode.workspace.onDidCloseTextDocument(updateBickSpecStatusBar)
   );
 
   updateBickSpecStatusBar();
+  maybePromptSetup(context);
 }
 
 function deactivate() {
@@ -157,7 +190,8 @@ async function runCompiler(targetPath, cwd, fallbackDiagnosticFile) {
   outputChannel.appendLine(`[TARGET] ${targetPath}`);
   outputChannel.appendLine(`[WORKING DIRECTORY] ${cwd}`);
 
-  const child = cp.spawn("java", ["-jar", jarPath, targetPath], {
+  const javaCommand = configuredJavaCommand();
+  const child = cp.spawn(javaCommand, ["-jar", jarPath, targetPath], {
     cwd,
     shell: false
   });
@@ -210,7 +244,7 @@ function runInTerminal(targetPath, cwd, reason) {
       cwd
     });
     terminal.show();
-    terminal.sendText(`java -jar "${jarPath}" "${targetPath}"`);
+    terminal.sendText(`"${configuredJavaCommand()}" -jar "${jarPath}" "${targetPath}"`);
     outputChannel.appendLine("[STARTED] Interactive compiler process launched in the integrated terminal.");
   });
 }
@@ -304,7 +338,7 @@ function applyDiagnostics(output, cwd, fallbackDiagnosticFile) {
 }
 
 function parseDiagnosticLine(line) {
-  const match = line.match(/^\[ERROR\]\s+((?:LEX|SYN|SEM|GEN)\d*)\s+-\s+(.+?)(?:\s+at line\s+(\d+):(\d+))?\s*$/);
+  const match = line.match(/^\[ERROR\]\s+((?:LEX|SYN|SEM|GEN|BUILD|EXEC|FS|LINK)\d*)\s+-\s+(.+?)(?:\s+at line\s+(\d+):(\d+))?\s*$/);
   if (!match) {
     return undefined;
   }
@@ -395,6 +429,26 @@ function resolveWorkspaceRoot(workspaceFolder) {
 
 function contextExtensionParent() {
   return path.resolve(__dirname, "..");
+}
+
+function configuredJavaCommand() {
+  return vscode.workspace.getConfiguration("bickspec").get("javaPath") || "java";
+}
+
+async function maybePromptSetup(context) {
+  const completed = context.globalState.get("bickspec.setup.completed", false);
+  const autoOpen = vscode.workspace.getConfiguration("bickspec.setup").get("autoOpenOnFirstLaunch", true);
+  if (completed || !autoOpen) {
+    return;
+  }
+  const answer = await vscode.window.showInformationMessage(
+    "BickSpec needs setup before compiling files. Open Setup Wizard?",
+    "Open Setup Wizard",
+    "Later"
+  );
+  if (answer === "Open Setup Wizard") {
+    SetupWizardPanel.createOrShow(context);
+  }
 }
 
 module.exports = {

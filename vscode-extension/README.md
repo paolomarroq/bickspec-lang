@@ -123,6 +123,19 @@ You can set a custom jar path in VS Code settings:
 
 Relative paths are resolved from the detected workspace/repository root.
 
+## BickSpec Setup Wizard
+
+Open **BickSpec: Open Setup Wizard** from the Command Palette to verify Java, the compiler JAR, optional repository tooling, workspace write access, and a real sample compilation.
+
+The wizard can:
+
+- use `java` from `PATH` or a custom `bickspec.javaPath`;
+- select the compiler JAR through `bickspec.compiler.jarPath`;
+- optionally remember a local repository in `bickspec.compiler.repoPath`;
+- run a real non-interactive setup test using valid BickSpec syntax.
+
+If Java is missing, install Java 21 or configure `bickspec.javaPath`. If the compiler JAR is missing, select `bickspec-compiler-1.0.0.jar` or build it from the main repository with `mvn -f app/pom.xml package`.
+
 Jar resolution order:
 
 1. `bickspec.compiler.jarPath` if configured.
@@ -139,6 +152,12 @@ Open the Command Palette and run:
 - **BickSpec: Open Generated Java**
 - **BickSpec: Open Symbol Table CSV**
 - **BickSpec: Open Parse Tree SVG**
+- **BickSpec: Open Setup Wizard**
+- **BickSpec: Validate Environment**
+- **BickSpec: Select Compiler JAR**
+- **BickSpec: Select bickspec-lang Repository**
+- **BickSpec: Run Setup Test**
+- **BickSpec: Reset Setup**
 
 When a `.bks` file is active, the status bar also shows:
 
