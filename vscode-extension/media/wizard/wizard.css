@@ -84,6 +84,18 @@ button.action {
 button.action.primary { background: var(--accent-strong); color: #003731; font-weight: 700; border-color: transparent; }
 button.action[disabled] { opacity: .45; cursor: not-allowed; }
 .note { color: var(--muted); font-size: 12px; margin-top: 8px; }
+.advanced {
+  margin-top: 18px;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 14px;
+  background: rgba(25, 28, 31, .72);
+}
+.advanced summary {
+  cursor: pointer;
+  color: var(--accent);
+  font-weight: 700;
+}
 .status {
   position: fixed; left: 0; right: 0; bottom: 0; height: 32px;
   padding: 0 16px; display: flex; align-items: center; justify-content: space-between;

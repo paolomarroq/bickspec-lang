@@ -36,6 +36,8 @@ class SetupWizardPanel {
         return this.postState(await this.collectState());
       case "validateJava":
         return this.postResult("java", await services.validateJava());
+      case "installJava":
+        return this.postResult("javaInstall", await services.openJavaInstallGuide());
       case "validateCompiler":
         return this.postResult("compiler", await services.validateCompilerJar());
       case "validateWorkspace":
@@ -183,18 +185,16 @@ class SetupWizardPanel {
   <title>BickSpec Setup Wizard</title>
 </head>
 <body>
-  <nav class="rail"><div>▤</div><div>⌕</div><div>⑂</div><div>▷</div><div class="active">⬡</div></nav>
-  <header class="topbar"><strong>Extension Setup Wizard</strong><span>×</span></header>
+  <nav class="rail"><div>01</div><div>02</div><div>03</div><div>04</div><div class="active">05</div></nav>
+  <header class="topbar"><strong>Extension Setup Wizard</strong><span>&times;</span></header>
   <main>
     <section class="wizard">
       <aside>
-        <button data-step="welcome">01 Welcome</button>
-        <button data-step="environment">02 Environment</button>
-        <button data-step="compiler">03 Repository</button>
-        <button data-step="compilerValidation">04 Compiler</button>
-        <button data-step="workspace">05 Workspace</button>
-        <button data-step="test">06 Test</button>
-        <button data-step="ready">07 Ready</button>
+        <button data-step="environment">01 Java Check</button>
+        <button data-step="compiler">02 Bundled Compiler Check</button>
+        <button data-step="workspace">03 Workspace Check</button>
+        <button data-step="test">04 Setup Test</button>
+        <button data-step="ready">05 Ready</button>
       </aside>
       <article>
         <div id="screen"></div>

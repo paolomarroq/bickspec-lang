@@ -18,7 +18,7 @@ The complete offline documentation site is available at:
 docs/site/bickspec_documentation.html
 ```
 
-The VS Code extension can open that documentation through **BickSpec: Open Documentation** and, when enabled, opens its bundled local copy once on first activation. The compiler remains in `bickspec-lang` and is the same compiler used by surrounding tooling such as Studio and the VS Code extension.
+The VS Code extension can open that documentation through **BickSpec: Open Documentation** and, when enabled, opens its bundled local copy once on first activation. The extension now bundles the compiler JAR for final users, while developers can still build the same compiler from source in `bickspec-lang`.
 
 ## Key Language Features
 
@@ -92,8 +92,8 @@ Executable behavior: Phase III is the final compiler pipeline: parse, semantic v
 
 ## Requirements
 
-- Java JDK 17 or newer.
-- Maven 3.x for local builds from source.
+- Java JDK 17 or newer for compiler usage.
+- Maven 3.x only when building the compiler from source.
 - Graphviz is optional. If `dot` is available in `PATH`, SVG parse trees are generated automatically. If Graphviz is missing, DOT files are still generated and compilation continues.
 - Final jar artifact: `bickspec-compiler-1.0.0.jar`.
 - Default jar main class: `com.bickspec.app.TranspileRunner`.
@@ -108,6 +108,28 @@ The jar is created at:
 
 ```text
 app/target/bickspec-compiler-1.0.0.jar
+```
+
+## VS Code Extension
+
+Final VS Code users only need:
+
+1. VS Code
+2. Java installed
+3. BickSpec VS Code extension installed
+
+The extension bundles `bickspec-compiler-1.0.0.jar` and uses that bundled JAR by default. Normal extension usage does not require cloning `bickspec-lang`, installing Git, installing Maven, or manually locating `app/target`.
+
+Developers can still build the compiler from source with:
+
+```bash
+mvn -f app/pom.xml package
+```
+
+The bundled extension copy lives at:
+
+```text
+vscode-extension/media/compiler/bickspec-compiler-1.0.0.jar
 ```
 
 ## How to Run Phase I

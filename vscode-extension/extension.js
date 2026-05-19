@@ -4,16 +4,18 @@ const fs = require("fs");
 const path = require("path");
 const SetupWizardPanel = require("./setup/SetupWizardPanel");
 const setupServices = require("./setup/setupServices");
+const { BUNDLED_COMPILER_RELATIVE_PATH, JAR_NAME, findCompilerJar } = require("./compilerResolver");
 
-const JAR_NAME = "bickspec-compiler-1.0.0.jar";
 let outputChannel;
 let diagnostics;
 let lastRunTarget;
 let lastRunWorkspace;
 let runStatusBarItem;
 let outputStatusBarItem;
+let extensionContext;
 
 function activate(context) {
+  extensionContext = context;
   outputChannel = vscode.window.createOutputChannel("BickSpec Compiler");
   diagnostics = vscode.languages.createDiagnosticCollection("bickspec");
   runStatusBarItem = vscode.window.createStatusBarItem("bickspec.run", vscode.StatusBarAlignment.Left, 90);
@@ -175,12 +177,30 @@ async function resolveFolderTarget(uri) {
 }
 
 async function runCompiler(targetPath, cwd, fallbackDiagnosticFile) {
-  const jarPath = await findCompilerJar(cwd);
-  if (!jarPath) {
-    vscode.window.showErrorMessage(`BickSpec compiler jar not found. Build it with: mvn -f app/pom.xml package`);
+  const compiler = resolveCompilerSelection(cwd);
+  if (!compiler.path) {
+    await showCompilerNotFoundMessage(compiler);
     outputChannel.show(true);
-    outputChannel.appendLine("[FAILURE] Compiler jar not found.");
-    outputChannel.appendLine(`Expected ${JAR_NAME} under app/target, or configure bickspec.compiler.jarPath.`);
+    outputChannel.appendLine("[FAILURE] Compiler JAR not found.");
+    outputChannel.appendLine(`[BickSpec] Missing bundled compiler: ${compiler.bundledJarPath}`);
+    if (compiler.invalidConfiguredJarPath) {
+      outputChannel.appendLine(`[BickSpec] Invalid custom compiler path: ${compiler.invalidConfiguredJarPath}`);
+    }
+    return;
+  }
+
+  const java = await setupServices.validateJava();
+  if (java.status === "error") {
+    outputChannel.show(true);
+    outputChannel.appendLine("[FAILURE] Java is unavailable.");
+    outputChannel.appendLine(`[BickSpec] ${java.suggestion}`);
+    const choice = await vscode.window.showErrorMessage(
+      "Java is required to run the bundled BickSpec compiler.",
+      "Open Setup Wizard"
+    );
+    if (choice === "Open Setup Wizard") {
+      SetupWizardPanel.createOrShow(extensionContext);
+    }
     return;
   }
 
@@ -188,12 +208,14 @@ async function runCompiler(targetPath, cwd, fallbackDiagnosticFile) {
   outputChannel.show(true);
   outputChannel.appendLine("");
   outputChannel.appendLine(`[STARTING] BickSpec compiler`);
-  outputChannel.appendLine(`[JAR] ${jarPath}`);
+  outputChannel.appendLine(`[BickSpec] Using ${compiler.source} compiler:`);
+  outputChannel.appendLine(compiler.path);
+  outputChannel.appendLine(`[JAR] ${compiler.path}`);
   outputChannel.appendLine(`[TARGET] ${targetPath}`);
   outputChannel.appendLine(`[WORKING DIRECTORY] ${cwd}`);
 
   const javaCommand = configuredJavaCommand();
-  const child = cp.spawn(javaCommand, ["-jar", jarPath, targetPath], {
+  const child = cp.spawn(javaCommand, ["-jar", compiler.path, targetPath], {
     cwd,
     shell: false
   });
@@ -226,9 +248,21 @@ async function runCompiler(targetPath, cwd, fallbackDiagnosticFile) {
 }
 
 function runInTerminal(targetPath, cwd, reason) {
-  findCompilerJar(cwd).then(jarPath => {
-    if (!jarPath) {
-      vscode.window.showErrorMessage("BickSpec compiler jar not found. Build it with: mvn -f app/pom.xml package");
+  setupServices.validateJava().then(async java => {
+    if (java.status === "error") {
+      const choice = await vscode.window.showErrorMessage(
+        "Java is required to run the bundled BickSpec compiler.",
+        "Open Setup Wizard"
+      );
+      if (choice === "Open Setup Wizard") {
+        SetupWizardPanel.createOrShow(extensionContext);
+      }
+      return;
+    }
+
+    const compiler = resolveCompilerSelection(cwd);
+    if (!compiler.path) {
+      await showCompilerNotFoundMessage(compiler);
       return;
     }
 
@@ -237,7 +271,9 @@ function runInTerminal(targetPath, cwd, reason) {
     outputChannel.appendLine("");
     outputChannel.appendLine(`[STARTING] BickSpec compiler`);
     outputChannel.appendLine(`[INTERACTIVE] ${reason}`);
-    outputChannel.appendLine(`[JAR] ${jarPath}`);
+    outputChannel.appendLine(`[BickSpec] Using ${compiler.source} compiler:`);
+    outputChannel.appendLine(compiler.path);
+    outputChannel.appendLine(`[JAR] ${compiler.path}`);
     outputChannel.appendLine(`[TARGET] ${targetPath}`);
     outputChannel.appendLine(`[WORKING DIRECTORY] ${cwd}`);
 
@@ -246,50 +282,37 @@ function runInTerminal(targetPath, cwd, reason) {
       cwd
     });
     terminal.show();
-    terminal.sendText(`"${configuredJavaCommand()}" -jar "${jarPath}" "${targetPath}"`);
+    terminal.sendText(`"${configuredJavaCommand()}" -jar "${compiler.path}" "${targetPath}"`);
     outputChannel.appendLine("[STARTED] Interactive compiler process launched in the integrated terminal.");
   });
 }
 
-async function findCompilerJar(cwd) {
+function resolveCompilerSelection(cwd) {
   const configured = vscode.workspace.getConfiguration("bickspec.compiler").get("jarPath");
-  const candidates = [];
-
-  if (configured && configured.trim()) {
-    candidates.push(path.isAbsolute(configured) ? configured : path.resolve(cwd, configured));
-  }
-
-  candidates.push(path.join(cwd, "app", "target", JAR_NAME));
-  candidates.push(path.join(path.dirname(cwd), "app", "target", JAR_NAME));
-  candidates.push(path.join(contextExtensionParent(), "app", "target", JAR_NAME));
-
-  for (const candidate of candidates) {
-    if (candidate && fs.existsSync(candidate)) {
-      return candidate;
-    }
-  }
-  const targetDirectories = [
-    path.join(cwd, "app", "target"),
-    path.join(path.dirname(cwd), "app", "target"),
-    path.join(contextExtensionParent(), "app", "target")
-  ];
-  for (const directory of targetDirectories) {
-    const discovered = discoverCompilerJar(directory);
-    if (discovered) {
-      return discovered;
-    }
-  }
-  return undefined;
+  const selection = findCompilerJar({ basePath: cwd, configuredJarPath: configured });
+  return {
+    ...selection,
+    source: selection.source === "custom"
+      ? "custom"
+      : selection.source === "bundled"
+        ? "bundled"
+        : selection.source === "developer"
+          ? "developer fallback"
+          : undefined
+  };
 }
 
-function discoverCompilerJar(directory) {
-  if (!fs.existsSync(directory)) {
-    return undefined;
+async function showCompilerNotFoundMessage(compiler) {
+  const message = compiler.invalidConfiguredJarPath
+    ? `Configured compiler JAR was not found at ${compiler.invalidConfiguredJarPath}.`
+    : `Bundled BickSpec compiler is missing from the extension package. Expected ${BUNDLED_COMPILER_RELATIVE_PATH}.`;
+  const choice = await vscode.window.showErrorMessage(
+    `${message} Reinstall the extension or run: mvn -f app/pom.xml package`,
+    "Open Setup Wizard"
+  );
+  if (choice === "Open Setup Wizard") {
+    SetupWizardPanel.createOrShow(extensionContext);
   }
-  const matches = fs.readdirSync(directory)
-    .filter(file => /^bickspec-compiler-.*\.jar$/.test(file) && !file.startsWith("original-"))
-    .sort();
-  return matches.length > 0 ? path.join(directory, matches[matches.length - 1]) : undefined;
 }
 
 async function folderContainsRead(folder) {

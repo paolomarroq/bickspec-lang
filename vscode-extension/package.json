@@ -5,6 +5,10 @@
   "version": "0.3.0",
   "publisher": "bickspec",
   "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/paolomarroq/bickspec-lang.git"
+  },
   "icon": "media/bickspec-icon.png",
   "main": "./extension.js",
   "engines": {
@@ -14,7 +18,30 @@
     "workspace"
   ],
   "scripts": {
-    "check": "node --check extension.js"
+    "check": "node --check extension.js",
+    "prepare:compiler": "node scripts/prepare-compiler.js",
+    "package": "npm run prepare:compiler && vsce package",
+    "package:vsix": "npm run prepare:compiler && vsce package"
+  },
+  "files": [
+    "media/compiler/**",
+    "media/docs/**",
+    "media/wizard/**",
+    "media/bickspec-icon.png",
+    "media/bickspec-icon.svg",
+    "setup/**",
+    "syntaxes/**",
+    "snippets/**",
+    "themes/**",
+    "scripts/**",
+    "language-configuration.json",
+    "compilerResolver.js",
+    "extension.js",
+    "README.md",
+    "package.json"
+  ],
+  "devDependencies": {
+    "@vscode/vsce": "^3.6.2"
   },
   "galleryBanner": {
     "color": "#0F274A",
@@ -178,7 +205,7 @@
           "bickspec.compiler.jarPath": {
             "type": "string",
             "default": "",
-            "description": "Path to bickspec-compiler-1.0.0.jar. Relative paths are resolved from the workspace folder. Leave empty to auto-detect app/target/bickspec-compiler-1.0.0.jar."
+            "description": "Optional custom path to bickspec-compiler-1.0.0.jar. Relative paths are resolved from the workspace folder. Leave empty to use the compiler bundled with the extension."
           },
           "bickspec.javaPath": {
             "type": "string",
@@ -188,7 +215,7 @@
           "bickspec.compiler.repoPath": {
             "type": "string",
             "default": "",
-            "description": "Optional path to the local bickspec-lang repository."
+            "description": "Optional path to the local bickspec-lang repository for advanced clone/build workflows."
           },
           "bickspec.compiler.githubUrl": {
             "type": "string",

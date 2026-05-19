@@ -2,8 +2,7 @@ const vscode = require("vscode");
 const cp = require("child_process");
 const fs = require("fs");
 const path = require("path");
-
-const JAR_NAME = "bickspec-compiler-1.0.0.jar";
+const { BUNDLED_COMPILER_RELATIVE_PATH, JAR_NAME, findCompilerJar: resolveCompilerJar, getBundledCompilerPath, resolveConfiguredPath } = require("../compilerResolver");
 const SETUP_SOURCE = `PROJECT "Setup Test" {
   A := 10
   B := 3
@@ -27,20 +26,19 @@ function workspaceRoot() {
   return folder ? folder.uri.fsPath : undefined;
 }
 
-function resolveConfiguredPath(value, base) {
-  if (!value || !value.trim()) {
-    return undefined;
-  }
-  return path.isAbsolute(value) ? value : path.resolve(base || process.cwd(), value);
-}
-
 async function validateJava() {
   const configured = vscode.workspace.getConfiguration("bickspec").get("javaPath");
   const command = configured && configured.trim() ? configured.trim() : "java";
   const result = await execFile(command, ["-version"]);
   const raw = result.combined.trim();
   if (result.error) {
-    return { status: "error", command, rawOutput: raw, suggestion: "Java was not found. Install Java 21 or configure bickspec.javaPath." };
+    return {
+      status: "error",
+      command,
+      rawOutput: raw,
+      suggestion: "Java is required to run the bundled BickSpec compiler.",
+      details: "Install Java 21 or configure bickspec.javaPath."
+    };
   }
   const match = raw.match(/version\s+"([^"]+)"/i) || raw.match(/openjdk\s+([0-9][^\s]*)/i);
   const version = match ? match[1] : "unknown";
@@ -106,35 +104,60 @@ async function validateRepository() {
 
 async function findCompilerJar(root) {
   const config = vscode.workspace.getConfiguration("bickspec.compiler");
-  const configured = resolveConfiguredPath(config.get("jarPath"), root);
-  const repo = configuredRepoPath();
-  const candidates = [
-    configured,
-    root && path.join(root, "app", "target", JAR_NAME),
-    repo && path.join(repo, "app", "target", JAR_NAME),
-    path.resolve(__dirname, "..", "..", "app", "target", JAR_NAME)
-  ].filter(Boolean);
-  return candidates.find(candidate => fs.existsSync(candidate));
+  return findCompilerJarShared({
+    basePath: root,
+    configuredJarPath: config.get("jarPath")
+  });
 }
 
 async function validateCompilerJar() {
   const root = workspaceRoot();
-  const jarPath = await findCompilerJar(root);
-  if (!jarPath) {
-    return { status: "error", jarPath: "", suggestion: `Compiler JAR not found. Select ${JAR_NAME} or build it from the repository.` };
+  const compiler = await findCompilerJar(root);
+  if (!compiler.path) {
+    return {
+      status: "error",
+      jarPath: "",
+      source: "missing",
+      bundledJarPath: getBundledCompilerPath(),
+      displayPath: BUNDLED_COMPILER_RELATIVE_PATH.replace(/\\/g, "/"),
+      suggestion: compiler.invalidConfiguredJarPath
+        ? `Configured compiler JAR was not found: ${compiler.invalidConfiguredJarPath}`
+        : `Bundled compiler missing. Expected ${BUNDLED_COMPILER_RELATIVE_PATH.replace(/\\/g, "/")}.`
+    };
   }
   const java = await validateJava();
   if (java.status === "error") {
-    return { status: "warning", jarPath, suggestion: "JAR found, but Java is unavailable so it could not be executed." };
+    return {
+      status: "warning",
+      jarPath: compiler.path,
+      source: compiler.source,
+      bundledJarPath: getBundledCompilerPath(),
+      displayPath: displayCompilerPath(compiler.path),
+      suggestion: compiler.source === "bundled"
+        ? "Bundled BickSpec compiler detected, but Java is unavailable so it could not be executed."
+        : compiler.source === "custom"
+          ? "Custom compiler JAR detected, but Java is unavailable so it could not be executed."
+          : "Developer fallback compiler detected, but Java is unavailable so it could not be executed."
+    };
   }
   const command = vscode.workspace.getConfiguration("bickspec").get("javaPath") || "java";
-  const probe = await execFile(command, ["-jar", jarPath, "--version"], { cwd: root || path.dirname(jarPath) });
+  const probe = await execFile(command, ["-jar", compiler.path], { cwd: root || path.dirname(compiler.path) });
+  const launchFailure = /(unable to access jarfile|invalid or corrupt jarfile|no main manifest attribute|could not find or load main class)/i.test(probe.combined);
   return {
-    status: "success",
-    jarPath,
+    status: launchFailure ? "error" : "success",
+    jarPath: compiler.path,
+    source: compiler.source,
+    bundledJarPath: getBundledCompilerPath(),
+    displayPath: displayCompilerPath(compiler.path),
     detectedVersion: probe.combined.match(/(\d+\.\d+\.\d+)/)?.[1],
     rawOutput: probe.combined.trim(),
-    suggestion: "Compiler JAR found. Final validation comes from the setup test compilation."
+    suggestion: launchFailure
+      ? "The compiler JAR exists but Java could not execute it."
+      : compiler.source === "bundled"
+        ? "Bundled BickSpec compiler detected."
+        : compiler.source === "custom"
+          ? "Custom compiler JAR detected."
+          : "Developer fallback compiler detected."
   };
 }
 
@@ -323,11 +346,60 @@ function repoSelectionResult(repoPath, logs, suggestion) {
   };
 }
 
+async function openJavaInstallGuide() {
+  const platform = process.platform;
+  if (platform === "win32") {
+    const winget = await validateTool("winget", ["--version"], "winget was not found.");
+    if (winget.available) {
+      const choice = await vscode.window.showInformationMessage(
+        "Java is required to run the bundled BickSpec compiler.",
+        "Install with winget",
+        "Open Adoptium Page"
+      );
+      if (choice === "Install with winget") {
+        const terminal = vscode.window.createTerminal({ name: "Install Java 21" });
+        terminal.show();
+        terminal.sendText("winget install EclipseAdoptium.Temurin.21.JDK --accept-package-agreements --accept-source-agreements");
+        return { status: "success", suggestion: "Launched winget install for Eclipse Temurin JDK 21." };
+      }
+      if (choice === "Open Adoptium Page") {
+        await vscode.env.openExternal(vscode.Uri.parse("https://adoptium.net/temurin/releases/?version=21"));
+        return { status: "success", suggestion: "Opened the Adoptium Java 21 download page." };
+      }
+      return { status: "warning", suggestion: "Java installation was cancelled." };
+    }
+    await vscode.env.openExternal(vscode.Uri.parse("https://adoptium.net/temurin/releases/?version=21"));
+    return { status: "warning", suggestion: "winget was not found. Opened the official Adoptium Java 21 page." };
+  }
+
+  if (platform === "darwin") {
+    await vscode.env.openExternal(vscode.Uri.parse("https://adoptium.net/temurin/releases/?version=21"));
+    vscode.window.showInformationMessage("Install Java 21 from Adoptium. Apple Silicon: choose macOS arm64/aarch64 PKG. Intel: choose macOS x64 PKG.");
+    return { status: "success", suggestion: "Opened the official Adoptium Java 21 page with macOS guidance." };
+  }
+
+  await vscode.env.openExternal(vscode.Uri.parse("https://adoptium.net/installation/"));
+  return { status: "success", suggestion: "Opened the official Adoptium installation page." };
+}
+
+function findCompilerJarShared(options) {
+  return resolveCompilerJar(options);
+}
+
+function displayCompilerPath(compilerPath) {
+  const bundled = getBundledCompilerPath();
+  if (compilerPath === bundled) {
+    return BUNDLED_COMPILER_RELATIVE_PATH.replace(/\\/g, "/");
+  }
+  return compilerPath;
+}
+
 module.exports = {
   SETUP_SOURCE,
   buildCompiler,
   cloneRepository,
   findCompilerJar,
+  openJavaInstallGuide,
   runSetupTest,
   selectRepository,
   validateCompilerJar,
