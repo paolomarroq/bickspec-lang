@@ -1,6 +1,8 @@
 # BickSpec Finance DSL for VS Code
 
-![BickSpec icon](media/icon.png)
+<p align="center">
+  <img src="media/icon.png" alt="BickSpec" width="96" />
+</p>
 
 BickSpec Finance DSL is a Visual Studio Code extension for `.bks` files. It runs the real BickSpec Java compiler from inside VS Code without reimplementing compiler logic.
 

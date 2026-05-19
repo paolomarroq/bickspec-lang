@@ -19,3 +19,4 @@ output/reports/*.csv
 output/reports/*.txt
 vscode-extension/node_modules/
 vscode-extension/*.vsix
+!vscode-extension/*.vsix
