@@ -282,9 +282,72 @@ function runInTerminal(targetPath, cwd, reason) {
       cwd
     });
     terminal.show();
-    terminal.sendText(`"${configuredJavaCommand()}" -jar "${compiler.path}" "${targetPath}"`);
+    terminal.sendText(buildInteractiveTerminalCommand(
+      configuredJavaCommand(),
+      compiler.path,
+      targetPath,
+      configuredTerminalShellPath()
+    ));
     outputChannel.appendLine("[STARTED] Interactive compiler process launched in the integrated terminal.");
   });
+}
+
+function buildInteractiveTerminalCommand(javaCommand, compilerJarPath, filePath, shellPath) {
+  const shellKind = detectShellKind(shellPath);
+  const quoteKind = shellKind || (process.platform === "win32" ? "powershell" : "sh");
+  const command = [
+    quoteForShell(javaCommand, quoteKind),
+    "-jar",
+    quoteForShell(compilerJarPath, quoteKind),
+    quoteForShell(filePath, quoteKind)
+  ].join(" ");
+
+  return quoteKind === "powershell" ? `& ${command}` : command;
+}
+
+function detectShellKind(shellPath) {
+  if (!shellPath) {
+    return process.platform === "win32" ? "powershell" : undefined;
+  }
+
+  const shellName = path.basename(shellPath).toLowerCase();
+  if (shellName === "powershell.exe" || shellName === "powershell" || shellName === "pwsh.exe" || shellName === "pwsh") {
+    return "powershell";
+  }
+  if (shellName === "cmd.exe" || shellName === "cmd") {
+    return "cmd";
+  }
+  if (shellName === "bash.exe" || shellName === "bash" || shellName === "zsh" || shellName === "sh") {
+    return "sh";
+  }
+  return process.platform === "win32" ? "powershell" : undefined;
+}
+
+function quoteForShell(value, shellKind) {
+  const text = String(value);
+  if (shellKind === "powershell") {
+    return `"${text.replace(/`/g, "``").replace(/"/g, "`\"")}"`;
+  }
+  if (shellKind === "sh") {
+    return `"${text.replace(/\\/g, "\\\\").replace(/"/g, "\\\"").replace(/\$/g, "\\$").replace(/`/g, "\\`")}"`;
+  }
+  return `"${text.replace(/"/g, "\"\"")}"`;
+}
+
+function configuredTerminalShellPath() {
+  const platformKey = process.platform === "win32"
+    ? "windows"
+    : process.platform === "darwin"
+      ? "osx"
+      : "linux";
+  const terminalConfig = vscode.workspace.getConfiguration("terminal.integrated");
+  const defaultProfile = terminalConfig.get(`defaultProfile.${platformKey}`);
+  const profiles = terminalConfig.get(`profiles.${platformKey}`) || {};
+  const profile = defaultProfile && profiles[defaultProfile];
+  if (profile && profile.path) {
+    return Array.isArray(profile.path) ? profile.path[0] : profile.path;
+  }
+  return process.platform === "win32" ? process.env.ComSpec : process.env.SHELL;
 }
 
 function resolveCompilerSelection(cwd) {
