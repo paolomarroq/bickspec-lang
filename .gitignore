@@ -18,5 +18,5 @@ output/trees/*_ParseTree.png
 output/reports/*.csv
 output/reports/*.txt
 vscode-extension/node_modules/
+*.vsix
 vscode-extension/*.vsix
-!vscode-extension/*.vsix

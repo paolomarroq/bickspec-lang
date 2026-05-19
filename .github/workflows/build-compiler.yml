@@ -1,0 +1,49 @@
+name: Build Compiler
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - main
+    paths:
+      - "app/**"
+      - "docs/BickSpec.g4"
+      - "pom.xml"
+      - ".github/workflows/build-compiler.yml"
+  pull_request:
+    branches:
+      - main
+    paths:
+      - "app/**"
+      - "docs/BickSpec.g4"
+      - "pom.xml"
+      - ".github/workflows/build-compiler.yml"
+
+jobs:
+  build-compiler:
+    name: Build compiler JAR
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Java 21
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "21"
+          cache: maven
+
+      - name: Build compiler
+        run: mvn -f app/pom.xml package
+
+      - name: Verify compiler JAR
+        run: test -f app/target/bickspec-compiler-1.0.0.jar
+
+      - name: Upload compiler JAR
+        uses: actions/upload-artifact@v4
+        with:
+          name: bickspec-compiler-jar
+          path: app/target/bickspec-compiler-1.0.0.jar
+          if-no-files-found: error
