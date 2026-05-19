@@ -347,7 +347,7 @@ function configuredTerminalShellPath() {
   if (profile && profile.path) {
     return Array.isArray(profile.path) ? profile.path[0] : profile.path;
   }
-  return process.platform === "win32" ? process.env.ComSpec : process.env.SHELL;
+  return process.platform === "win32" ? undefined : process.env.SHELL;
 }
 
 function resolveCompilerSelection(cwd) {

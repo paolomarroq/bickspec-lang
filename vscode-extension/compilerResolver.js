@@ -39,9 +39,21 @@ function discoverCompilerJar(directory) {
   return matches.length > 0 ? path.join(directory, matches[matches.length - 1]) : undefined;
 }
 
+function samePath(left, right) {
+  return path.resolve(left).toLowerCase() === path.resolve(right).toLowerCase();
+}
+
+function isDeveloperFallbackPath(candidatePath, basePath) {
+  if (!candidatePath) {
+    return false;
+  }
+  const fallbackCandidates = getDeveloperFallbackCandidates(basePath);
+  return fallbackCandidates.some(candidate => samePath(candidatePath, candidate));
+}
+
 function findCompilerJar(options = {}) {
   const configuredJarPath = resolveConfiguredPath(options.configuredJarPath, options.basePath);
-  if (configuredJarPath && fs.existsSync(configuredJarPath)) {
+  if (configuredJarPath && fs.existsSync(configuredJarPath) && !isDeveloperFallbackPath(configuredJarPath, options.basePath)) {
     return { path: configuredJarPath, source: "custom", exists: true };
   }
 
@@ -79,5 +91,6 @@ module.exports = {
   discoverCompilerJar,
   findCompilerJar,
   getBundledCompilerPath,
+  isDeveloperFallbackPath,
   resolveConfiguredPath
 };
