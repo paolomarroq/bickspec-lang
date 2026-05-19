@@ -1,15 +1,15 @@
 {
   "name": "bickspec-finance-dsl",
   "displayName": "BickSpec Finance DSL",
-  "description": "Professional VS Code support for BickSpec, a finance and economic engineering DSL with compiler integration.",
-  "version": "0.3.0",
+  "description": "VS Code support for the BickSpec finance and economic engineering DSL.",
+  "version": "0.3.1",
   "publisher": "bickspec",
   "license": "MIT",
   "repository": {
     "type": "git",
     "url": "https://github.com/paolomarroq/bickspec-lang.git"
   },
-  "icon": "media/bickspec-icon.png",
+  "icon": "media/icon.png",
   "main": "./extension.js",
   "engines": {
     "vscode": "^1.90.0"
@@ -27,6 +27,7 @@
     "media/compiler/**",
     "media/docs/**",
     "media/wizard/**",
+    "media/icon.png",
     "media/bickspec-icon.png",
     "media/bickspec-icon.svg",
     "setup/**",
@@ -66,15 +67,14 @@
   ],
   "categories": [
     "Programming Languages",
-    "Snippets",
-    "Themes"
+    "Other"
   ],
     "keywords": [
     "bickspec",
     "dsl",
     "finance",
-    "economic engineering",
-    "antlr"
+    "compiler",
+    "economic-engineering"
   ],
   "contributes": {
     "languages": [

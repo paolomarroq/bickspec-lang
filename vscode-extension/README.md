@@ -1,6 +1,6 @@
 # BickSpec Finance DSL for VS Code
 
-![BickSpec icon](media/bickspec-icon.png)
+![BickSpec icon](media/icon.png)
 
 BickSpec Finance DSL is a Visual Studio Code extension for `.bks` files. It runs the real BickSpec Java compiler from inside VS Code without reimplementing compiler logic.
 
@@ -118,6 +118,17 @@ npm run package:vsix
 ```
 
 This runs `prepare:compiler` first and produces a `.vsix` file in `vscode-extension/`.
+
+## Reinstall / Update
+
+Use:
+
+```powershell
+code --uninstall-extension bickspec.bickspec-finance-dsl
+code --install-extension .\bickspec-finance-dsl-<version>.vsix --force
+```
+
+Then reload VS Code. Open VS Code normally, not Extension Development Host. Use Ctrl+Shift+P and search BickSpec, or open a `.bks` file to activate language support.
 
 ## Troubleshooting
 
